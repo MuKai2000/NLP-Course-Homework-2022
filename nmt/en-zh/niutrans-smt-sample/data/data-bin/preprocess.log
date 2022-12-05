@@ -1,0 +1,14 @@
+Namespace(aim_repo=None, aim_run_hash=None, align_suffix=None, alignfile=None, all_gather_list_size=16384, amp=False, amp_batch_retries=2, amp_init_scale=128, amp_scale_window=None, azureml_logging=False, bf16=False, bpe=None, cpu=False, criterion='cross_entropy', dataset_impl='mmap', destdir='/home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/data-bin', dict_only=False, empty_cache_freq=0, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, joined_dictionary=False, log_file=None, log_format=None, log_interval=100, lr_scheduler='fixed', memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, model_parallel_size=1, no_progress_bar=False, nwordssrc=-1, nwordstgt=-1, on_cpu_convert_precision=False, only_source=False, optimizer=None, padding_factor=8, plasma_path='/tmp/plasma', profile=False, quantization_config_path=None, reset_logging=False, scoring='bleu', seed=1, source_lang='en', srcdict=None, suppress_crashes=False, target_lang='zh', task='translation', tensorboard_logdir=None, testpref='/home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/test', tgtdict=None, threshold_loss_scale=None, thresholdsrc=0, thresholdtgt=0, tokenizer=None, tpu=False, trainpref='/home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/train', use_plasma_view=False, user_dir=None, validpref='/home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/valid', wandb_project=None, workers=1)
+[en] Dictionary: 4792 types
+[en] /home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/train.en: 945 sents, 42479 tokens, 0.0% replaced (by <unk>)
+[en] Dictionary: 4792 types
+[en] /home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/valid.en: 31 sents, 1243 tokens, 2.25% replaced (by <unk>)
+[en] Dictionary: 4792 types
+[en] /home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/test.en: 24 sents, 1148 tokens, 2.7% replaced (by <unk>)
+[zh] Dictionary: 5232 types
+[zh] /home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/train.zh: 945 sents, 31782 tokens, 0.0% replaced (by <unk>)
+[zh] Dictionary: 5232 types
+[zh] /home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/valid.zh: 31 sents, 906 tokens, 3.53% replaced (by <unk>)
+[zh] Dictionary: 5232 types
+[zh] /home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/test.zh: 24 sents, 885 tokens, 4.86% replaced (by <unk>)
+Wrote preprocessed data to /home/koukq0907/nmt/en-zh/niutrans-smt-sample/data/data-bin
