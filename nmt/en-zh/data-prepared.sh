@@ -5,7 +5,7 @@ reload=0
 dataset=niutrans-smt-sample # or wmt
 
 # Path
-root=~/NLP
+root=~/NLP-Course-Homework-2022
 pwd=$(pwd)
 dataset_dir=$pwd/$dataset
 if [ ! -d "$dataset_dir" ]; then

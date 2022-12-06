@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Path
-root=~/NLP
+root=~/NLP-Course-Homework-2022
 pwd=$(pwd)
 
 dataset_dir=$root/nmt/en-zh/niutrans-smt-sample
