@@ -7,18 +7,18 @@ from typing import Dict, Optional, Tuple
 
 import torch
 import torch.nn.functional as F
-from torch import Tensor, nn
-
 from fairseq import utils
 from fairseq.incremental_decoding_utils import with_incremental_state
 from fairseq.modules.fairseq_dropout import FairseqDropout
+from torch import Tensor, nn
+
 
 try:
     from fairseq.model_parallel.megatron.mpu import (
-        ColumnParallelLinear,
-        RowParallelLinear,
         get_cuda_rng_tracker,
         get_model_parallel_world_size,
+        ColumnParallelLinear,
+        RowParallelLinear,
     )
 
     has_megatron_submodule = True
@@ -71,7 +71,7 @@ class ModelParallelMultiheadAttention(nn.Module):
         assert (
             self.head_dim * num_heads == self.embed_dim
         ), "embed_dim must be divisible by num_heads"
-        self.scaling = self.head_dim**-0.5
+        self.scaling = self.head_dim ** -0.5
 
         self.self_attention = self_attention
         self.encoder_decoder_attention = encoder_decoder_attention
@@ -92,6 +92,11 @@ class ModelParallelMultiheadAttention(nn.Module):
         self.out_proj = RowParallelLinear(
             embed_dim, embed_dim, bias=bias, input_is_parallel=True
         )
+
+        self.tpu = False
+
+    def prepare_for_tpu_(self, **kwargs):
+        self.tpu = True
 
     def forward(
         self,
@@ -117,8 +122,6 @@ class ModelParallelMultiheadAttention(nn.Module):
         tgt_len, bsz, embed_dim = query.size()
         assert embed_dim == self.embed_dim
         assert list(query.size()) == [tgt_len, bsz, embed_dim]
-
-        is_tpu = query.device.type == "xla"
 
         if incremental_state is not None:
             saved_state = self._get_input_buffer(incremental_state)
@@ -247,7 +250,7 @@ class ModelParallelMultiheadAttention(nn.Module):
             attn_weights = attn_weights.view(
                 bsz, self.num_heads_partition, tgt_len, src_len
             )
-            if not is_tpu:
+            if not self.tpu:
                 attn_weights = attn_weights.masked_fill(
                     key_padding_mask.unsqueeze(1).unsqueeze(2).to(torch.bool),
                     float("-inf"),

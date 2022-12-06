@@ -47,24 +47,15 @@ def get_parser():
 def main(args):
     assert args.valid_percent >= 0 and args.valid_percent <= 1.0
 
-    if not os.path.exists(args.dest):
-        os.makedirs(args.dest)
-
     dir_path = os.path.realpath(args.root)
     search_path = os.path.join(dir_path, "**/*." + args.ext)
     rand = random.Random(args.seed)
 
-    valid_f = (
-        open(os.path.join(args.dest, "valid.tsv"), "w")
-        if args.valid_percent > 0
-        else None
-    )
-
-    with open(os.path.join(args.dest, "train.tsv"), "w") as train_f:
+    with open(os.path.join(args.dest, "train.tsv"), "w") as train_f, open(
+        os.path.join(args.dest, "valid.tsv"), "w"
+    ) as valid_f:
         print(dir_path, file=train_f)
-
-        if valid_f is not None:
-            print(dir_path, file=valid_f)
+        print(dir_path, file=valid_f)
 
         for fname in glob.iglob(search_path, recursive=True):
             file_path = os.path.realpath(fname)
@@ -77,8 +68,6 @@ def main(args):
             print(
                 "{}\t{}".format(os.path.relpath(file_path, dir_path), frames), file=dest
             )
-    if valid_f is not None:
-        valid_f.close()
 
 
 if __name__ == "__main__":

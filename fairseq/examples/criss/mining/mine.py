@@ -7,12 +7,7 @@ import argparse
 import glob
 from subprocess import check_call
 
-try:
-    import faiss
-
-    has_faiss = True
-except ImportError:
-    has_faiss = False
+import faiss
 import numpy as np
 
 
@@ -45,8 +40,6 @@ def load_batch(emb_file, dim):
 
 
 def knnGPU_sharded(x_batches_f, y_batches_f, dim, k, direction="x2y"):
-    if not has_faiss:
-        raise ImportError("Please install Faiss")
     sims = []
     inds = []
     xfrom = 0

@@ -18,7 +18,6 @@ from fairseq.models.transformer import (
     TransformerModel,
     base_architecture,
 )
-from fairseq.utils import safe_hasattr
 
 
 @register_model("multilingual_transformer")
@@ -76,9 +75,9 @@ class MultilingualTransformerModel(FairseqMultiModel):
         # make sure all arguments are present in older models
         base_multilingual_architecture(args)
 
-        if not safe_hasattr(args, "max_source_positions"):
+        if not hasattr(args, "max_source_positions"):
             args.max_source_positions = 1024
-        if not safe_hasattr(args, "max_target_positions"):
+        if not hasattr(args, "max_target_positions"):
             args.max_target_positions = 1024
 
         src_langs = [lang_pair.split("-")[0] for lang_pair in task.model_lang_pairs]
@@ -195,14 +194,14 @@ class MultilingualTransformerModel(FairseqMultiModel):
         module_class = TransformerEncoder if is_encoder else TransformerDecoder
         return module_class(args, lang_dict, embed_tokens)
 
-    def load_state_dict(self, state_dict, strict=True, model_cfg=None):
+    def load_state_dict(self, state_dict, strict=True, args=None):
         state_dict_subset = state_dict.copy()
         for k, _ in state_dict.items():
             assert k.startswith("models.")
             lang_pair = k.split(".")[1]
             if lang_pair not in self.models:
                 del state_dict_subset[k]
-        super().load_state_dict(state_dict_subset, strict=strict, model_cfg=model_cfg)
+        super().load_state_dict(state_dict_subset, strict=strict, args=args)
 
 
 @register_model_architecture("multilingual_transformer", "multilingual_transformer")

@@ -15,7 +15,6 @@ from fairseq.data import (
     AppendTokenDataset,
     Dictionary,
     IdDataset,
-    LMContextWindowDataset,
     MonolingualDataset,
     NestedDictionaryDataset,
     NumelDataset,
@@ -29,7 +28,7 @@ from fairseq.data import (
 from fairseq.data.indexed_dataset import get_available_dataset_impl
 from fairseq.data.shorten_dataset import maybe_shorten_dataset
 from fairseq.dataclass import ChoiceEnum, FairseqDataclass
-from fairseq.tasks import LegacyFairseqTask, register_task
+from fairseq.tasks import FairseqTask, register_task
 from omegaconf import II
 
 
@@ -40,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class LanguageModelingConfig(FairseqDataclass):
+    # TODO common var add to parent
     data: Optional[str] = field(
         default=None, metadata={"help": "path to data directory"}
     )
@@ -84,30 +84,17 @@ class LanguageModelingConfig(FairseqDataclass):
             'e.g., "train,valid" (default: all dataset splits)'
         },
     )
-    pad_to_fixed_length: Optional[bool] = field(
-        default=False,
-        metadata={"help": "pad to fixed length"},
-    )
-    pad_to_fixed_bsz: Optional[bool] = field(
-        default=False,
-        metadata={"help": "boolean to pad to fixed batch size"},
-    )
-
     # TODO common vars below add to parent
-    seed: int = II("common.seed")
-    batch_size: Optional[int] = II("dataset.batch_size")
-    batch_size_valid: Optional[int] = II("dataset.batch_size_valid")
+    seed: int = II("params.common.seed")
     dataset_impl: Optional[ChoiceEnum(get_available_dataset_impl())] = II(
-        "dataset.dataset_impl"
+        "params.dataset.dataset_impl"
     )
-    data_buffer_size: int = II("dataset.data_buffer_size")
-    tpu: bool = II("common.tpu")
-    use_plasma_view: bool = II("common.use_plasma_view")
-    plasma_path: str = II("common.plasma_path")
+    data_buffer_size: int = II("params.dataset.data_buffer_size")
+    tpu: bool = II("params.common.tpu")
 
 
 @register_task("language_modeling", dataclass=LanguageModelingConfig)
-class LanguageModelingTask(LegacyFairseqTask):
+class LanguageModelingTask(FairseqTask):
     """
     Train a language model.
 
@@ -171,8 +158,8 @@ class LanguageModelingTask(LegacyFairseqTask):
         dictionary, output_dictionary = cls.setup_dictionary(args, **kwargs)
 
         # upgrade old checkpoints
-        if getattr(args, "exclude_self_target", False):
-            args.self_target = False
+        if hasattr(args, "exclude_self_target"):
+            args.self_target = not args.exclude_self_target
 
         targets = []
         if getattr(args, "self_target", False):
@@ -187,8 +174,9 @@ class LanguageModelingTask(LegacyFairseqTask):
 
         return cls(args, dictionary, output_dictionary, targets=targets)
 
-    def build_model(self, args, from_checkpoint=False):
-        model = super().build_model(args, from_checkpoint)
+    def build_model(self, args):
+        model = super().build_model(args)
+
         for target in self.targets:
             if target not in model.supported_targets:
                 raise ValueError(
@@ -197,13 +185,11 @@ class LanguageModelingTask(LegacyFairseqTask):
 
         return model
 
-    def load_dataset(
-        self, split: str, epoch=1, combine=False, **kwargs
-    ) -> MonolingualDataset:
+    def load_dataset(self, split, epoch=1, combine=False, **kwargs):
         """Load a given dataset split.
 
         Args:
-            split (str): name of the split (e.g., train, valid, valid1, test)
+            split (str): name of the split (e.g., train, valid, test)
         """
         paths = utils.split_paths(self.args.data)
         assert len(paths) > 0
@@ -211,12 +197,13 @@ class LanguageModelingTask(LegacyFairseqTask):
         data_path = paths[(epoch - 1) % len(paths)]
         split_path = os.path.join(data_path, split)
 
-        # each process has its own copy of the raw data (likely to be an np.memmap)
         dataset = data_utils.load_indexed_dataset(
             split_path, self.dictionary, self.args.dataset_impl, combine=combine
         )
         if dataset is None:
-            raise FileNotFoundError(f"Dataset not found: {split} ({split_path})")
+            raise FileNotFoundError(
+                "Dataset not found: {} ({})".format(split, split_path)
+            )
 
         dataset = maybe_shorten_dataset(
             dataset,
@@ -226,6 +213,7 @@ class LanguageModelingTask(LegacyFairseqTask):
             self.args.tokens_per_sample,
             self.args.seed,
         )
+
         dataset = TokenBlockDataset(
             dataset,
             dataset.sizes,
@@ -234,26 +222,14 @@ class LanguageModelingTask(LegacyFairseqTask):
             eos=self.dictionary.eos(),
             break_mode=self.args.sample_break_mode,
             include_targets=True,
-            use_plasma_view=self.args.use_plasma_view,
-            split_path=split_path,
-            plasma_path=self.args.plasma_path,
         )
 
         add_eos_for_other_targets = (
             self.args.sample_break_mode is not None
             and self.args.sample_break_mode != "none"
         )
-        fixed_pad_length = None
-        if self.args.pad_to_fixed_length:
-            fixed_pad_length = self.args.tokens_per_sample
 
-        pad_to_bsz = None
-        if self.args.pad_to_fixed_bsz:
-            pad_to_bsz = (
-                self.args.batch_size_valid if "valid" in split else self.args.batch_size
-            )
-
-        self.datasets[split] = MonolingualDataset(
+        self.datasets[split] = self._initialize_dataset(
             dataset=dataset,
             sizes=dataset.sizes,
             src_vocab=self.dictionary,
@@ -262,9 +238,10 @@ class LanguageModelingTask(LegacyFairseqTask):
             shuffle=True,
             targets=self.targets,
             add_bos_token=self.args.add_bos_token,
-            fixed_pad_length=fixed_pad_length,
-            pad_to_bsz=pad_to_bsz,
         )
+
+    def _initialize_dataset(self, **kwargs):
+        return MonolingualDataset(**kwargs)
 
     def build_dataset_for_inference(self, src_tokens, src_lengths, **kwargs):
         """
@@ -336,39 +313,6 @@ class LanguageModelingTask(LegacyFairseqTask):
             return generator.generate(
                 models, sample, prefix_tokens=prefix_tokens, bos_token=bos_token
             )
-
-    def eval_lm_dataloader(
-        self,
-        dataset,
-        max_tokens: Optional[int] = 36000,
-        batch_size: Optional[int] = None,
-        max_positions: Optional[int] = None,
-        num_shards: int = 1,
-        shard_id: int = 0,
-        num_workers: int = 1,
-        data_buffer_size: int = 10,
-        # ensures that every evaluated token has access to a context of at least
-        # this size, if possible
-        context_window: int = 0,
-    ):
-        if context_window > 0:
-            dataset = LMContextWindowDataset(
-                dataset=dataset,
-                tokens_per_sample=self.args.tokens_per_sample,
-                context_window=context_window,
-                pad_idx=self.source_dictionary.pad(),
-            )
-        return self.get_batch_iterator(
-            dataset=dataset,
-            max_tokens=max_tokens,
-            max_sentences=batch_size,
-            max_positions=max_positions,
-            ignore_invalid_inputs=True,
-            num_shards=num_shards,
-            shard_id=shard_id,
-            num_workers=num_workers,
-            data_buffer_size=data_buffer_size,
-        ).next_epoch_itr(shuffle=False)
 
     @property
     def source_dictionary(self):

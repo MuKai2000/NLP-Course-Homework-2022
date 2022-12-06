@@ -3,40 +3,28 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 import shutil
 import struct
 from functools import lru_cache
 
 import numpy as np
 import torch
-from fairseq.dataclass.constants import DATASET_IMPL_CHOICES
 from fairseq.data.fasta_dataset import FastaDataset
 from fairseq.file_io import PathManager
-from fairseq.data.huffman import HuffmanMMapIndexedDataset, HuffmanMMapIndex
 
 from . import FairseqDataset
 
-from typing import Union
 
-
-def best_fitting_int_dtype(
-    max_int_to_represent,
-) -> Union[np.uint16, np.uint32, np.int64]:
-
-    if max_int_to_represent is None:
-        return np.uint32  # Safe guess
-    elif max_int_to_represent < 65500:
+def __best_fitting_dtype(vocab_size=None):
+    if vocab_size is not None and vocab_size < 65500:
         return np.uint16
-    elif max_int_to_represent < 4294967295:
-        return np.uint32
     else:
-        return np.int64
-        # we avoid np.uint64 because it doesn't save space and its type promotion behaves unexpectedly
-        # https://github.com/numpy/numpy/issues/5745
+        return np.int32
 
 
 def get_available_dataset_impl():
-    return list(map(str, DATASET_IMPL_CHOICES))
+    return ["raw", "lazy", "cached", "mmap", "fasta"]
 
 
 def infer_dataset_impl(path):
@@ -49,8 +37,6 @@ def infer_dataset_impl(path):
                 return "cached"
             elif magic == MMapIndexedDataset.Index._HDR_MAGIC[:8]:
                 return "mmap"
-            elif magic == HuffmanMMapIndex._HDR_MAGIC[:8]:
-                return "huffman"
             else:
                 return None
     elif FastaDataset.exists(path):
@@ -62,14 +48,10 @@ def infer_dataset_impl(path):
 def make_builder(out_file, impl, vocab_size=None):
     if impl == "mmap":
         return MMapIndexedDatasetBuilder(
-            out_file, dtype=best_fitting_int_dtype(vocab_size)
+            out_file, dtype=__best_fitting_dtype(vocab_size)
         )
     elif impl == "fasta":
         raise NotImplementedError
-    elif impl == "huffman":
-        raise ValueError(
-            "Use HuffmanCodeBuilder directly as it has a different interface."
-        )
     else:
         return IndexedDatasetBuilder(out_file)
 
@@ -88,8 +70,6 @@ def make_dataset(path, impl, fix_lua_indexing=False, dictionary=None):
         from fairseq.data.fasta_dataset import EncodedFastaDataset
 
         return EncodedFastaDataset(path, dictionary)
-    elif impl == "huffman" and HuffmanMMapIndexedDataset.exists(path):
-        return HuffmanMMapIndexedDataset(path)
     return None
 
 
@@ -98,8 +78,6 @@ def dataset_exists(path, impl):
         return IndexedRawTextDataset.exists(path)
     elif impl == "mmap":
         return MMapIndexedDataset.exists(path)
-    elif impl == "huffman":
-        return HuffmanMMapIndexedDataset.exists(path)
     else:
         return IndexedDataset.exists(path)
 
@@ -114,23 +92,21 @@ def write_longs(f, a):
     f.write(np.array(a, dtype=np.int64))
 
 
-_code_to_dtype = {
+dtypes = {
     1: np.uint8,
     2: np.int8,
     3: np.int16,
     4: np.int32,
     5: np.int64,
-    6: np.float64,
+    6: np.float,
     7: np.double,
     8: np.uint16,
-    9: np.uint32,
-    10: np.uint64,
 }
 
 
-def _dtype_header_code(dtype) -> int:
-    for k in _code_to_dtype.keys():
-        if _code_to_dtype[k] == dtype:
+def code(dtype):
+    for k in dtypes.keys():
+        if dtypes[k] == dtype:
             return k
     raise ValueError(dtype)
 
@@ -165,7 +141,7 @@ class IndexedDataset(FairseqDataset):
             version = f.read(8)
             assert struct.unpack("<Q", version) == (1,)
             code, self.element_size = struct.unpack("<QQ", f.read(16))
-            self.dtype = _code_to_dtype[code]
+            self.dtype = dtypes[code]
             self._len, self.s = struct.unpack("<QQ", f.read(16))
             self.dim_offsets = read_longs(f, self._len + 1)
             self.data_offsets = read_longs(f, self._len + 1)
@@ -183,7 +159,7 @@ class IndexedDataset(FairseqDataset):
             self.data_file.close()
 
     @lru_cache(maxsize=8)
-    def __getitem__(self, i) -> torch.Tensor:
+    def __getitem__(self, i):
         if not self.data_file:
             self.read_data(self.path)
         self.check_index(i)
@@ -320,14 +296,14 @@ class IndexedRawTextDataset(FairseqDataset):
         return PathManager.exists(path)
 
 
-class IndexedDatasetBuilder:
+class IndexedDatasetBuilder(object):
     element_sizes = {
         np.uint8: 1,
         np.int8: 1,
         np.int16: 2,
         np.int32: 4,
         np.int64: 8,
-        np.float64: 4,
+        np.float: 4,
         np.double: 8,
     }
 
@@ -372,9 +348,7 @@ class IndexedDatasetBuilder:
         index = open(index_file, "wb")
         index.write(b"TNTIDX\x00\x00")
         index.write(struct.pack("<Q", 1))
-        index.write(
-            struct.pack("<QQ", _dtype_header_code(self.dtype), self.element_size)
-        )
+        index.write(struct.pack("<QQ", code(self.dtype), self.element_size))
         index.write(struct.pack("<QQ", len(self.data_offsets) - 1, len(self.sizes)))
         write_longs(index, self.dim_offsets)
         write_longs(index, self.data_offsets)
@@ -389,18 +363,18 @@ def _warmup_mmap_file(path):
 
 
 class MMapIndexedDataset(torch.utils.data.Dataset):
-    class Index:
+    class Index(object):
         _HDR_MAGIC = b"MMIDIDX\x00\x00"
 
         @classmethod
         def writer(cls, path, dtype):
-            class _Writer:
+            class _Writer(object):
                 def __enter__(self):
                     self._file = open(path, "wb")
 
                     self._file.write(cls._HDR_MAGIC)
                     self._file.write(struct.pack("<Q", 1))
-                    self._file.write(struct.pack("<B", _dtype_header_code(dtype)))
+                    self._file.write(struct.pack("<B", code(dtype)))
 
                     return self
 
@@ -445,7 +419,7 @@ class MMapIndexedDataset(torch.utils.data.Dataset):
                 assert (1,) == version
 
                 (dtype_code,) = struct.unpack("<B", stream.read(1))
-                self._dtype = _code_to_dtype[dtype_code]
+                self._dtype = dtypes[dtype_code]
                 self._dtype_size = self._dtype().itemsize
 
                 self._len = struct.unpack("<Q", stream.read(8))[0]
@@ -543,7 +517,7 @@ class MMapIndexedDataset(torch.utils.data.Dataset):
         )
 
 
-def get_indexed_dataset_to_local(path) -> str:
+def get_indexed_dataset_to_local(path):
     local_index_path = PathManager.get_local_path(index_file_path(path))
     local_data_path = PathManager.get_local_path(data_file_path(path))
 
@@ -557,7 +531,7 @@ def get_indexed_dataset_to_local(path) -> str:
     return local_path
 
 
-class MMapIndexedDatasetBuilder:
+class MMapIndexedDatasetBuilder(object):
     def __init__(self, out_file, dtype=np.int64):
         self._data_file = open(out_file, "wb")
         self._dtype = dtype

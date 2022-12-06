@@ -4,7 +4,6 @@ max-update: 200000
 max-tokens: 4096
 
 num-workers: 8
-patience: 10
 no-progress-bar: True
 log-interval: 100
 seed: 1

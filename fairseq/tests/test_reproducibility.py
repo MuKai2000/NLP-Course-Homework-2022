@@ -3,10 +3,12 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+import contextlib
 import json
 import os
 import tempfile
 import unittest
+from io import StringIO
 
 import torch
 
@@ -24,7 +26,7 @@ class TestReproducibility(unittest.TestCase):
     ):
         def get_last_log_stats_containing_string(log_records, search_string):
             for log_record in logs.records[::-1]:
-                if isinstance(log_record.msg, str) and search_string in log_record.msg:
+                if search_string in log_record.msg:
                     return json.loads(log_record.msg)
 
         if extra_flags is None:
@@ -121,18 +123,6 @@ class TestReproducibility(unittest.TestCase):
                 "--fp16-init-scale",
                 "4096",
             ],
-        )
-
-    @unittest.skipIf(not torch.cuda.is_available(), "test requires a GPU")
-    def test_reproducibility_amp(self):
-        self._test_reproducibility(
-            "test_reproducibility_amp",
-            [
-                "--amp",
-                "--fp16-init-scale",
-                "4096",
-            ],
-            delta=0.011,
         )
 
     def test_mid_epoch_reproducibility(self):

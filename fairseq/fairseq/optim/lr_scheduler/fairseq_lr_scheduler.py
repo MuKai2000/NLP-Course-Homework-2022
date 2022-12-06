@@ -6,15 +6,16 @@
 from argparse import Namespace
 
 from fairseq.dataclass.utils import gen_parser_from_dataclass
-from fairseq.optim import FairseqOptimizer
+
+from .. import FairseqOptimizer
 
 
 class FairseqLRScheduler(object):
-    def __init__(self, cfg, optimizer):
+    def __init__(self, args, optimizer):
         super().__init__()
-        if optimizer is not None and not isinstance(optimizer, FairseqOptimizer):
+        if not isinstance(optimizer, FairseqOptimizer):
             raise ValueError("optimizer must be an instance of FairseqOptimizer")
-        self.cfg = cfg
+        self.args = args
         self.optimizer = optimizer
         self.best = None
 

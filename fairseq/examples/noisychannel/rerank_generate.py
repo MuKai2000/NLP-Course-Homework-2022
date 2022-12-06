@@ -15,7 +15,7 @@ from contextlib import redirect_stdout
 from fairseq import options
 from fairseq_cli import generate, preprocess
 
-from examples.noisychannel import rerank_options, rerank_utils
+from . import rerank_options, rerank_utils
 
 
 def gen_and_reprocess_nbest(args):
@@ -163,7 +163,7 @@ def gen_and_reprocess_nbest(args):
 
     gen_output = rerank_utils.BitextOutputFromGen(
         predictions_bpe_file,
-        bpe_symbol=args.post_process,
+        bpe_symbol=args.remove_bpe,
         nbest=using_nbest,
         prefix_len=args.prefix_len,
         target_prefix_frac=args.target_prefix_frac,
@@ -248,7 +248,7 @@ def gen_and_reprocess_nbest(args):
                     pre_gen + rescore_file + "." + args.source_lang,
                     pre_gen + rescore_file + "." + args.target_lang,
                     pre_gen + "/reference_file",
-                    bpe_symbol=args.post_process,
+                    bpe_symbol=args.remove_bpe,
                 )
                 if args.prefix_len is not None:
                     bw_rescore_file = prefix_len_rescore_file
@@ -260,7 +260,7 @@ def gen_and_reprocess_nbest(args):
                         pre_gen + prefix_len_rescore_file + "." + args.target_lang,
                         pre_gen + "/reference_file",
                         prefix_len=args.prefix_len,
-                        bpe_symbol=args.post_process,
+                        bpe_symbol=args.remove_bpe,
                     )
                 elif args.target_prefix_frac is not None:
                     bw_rescore_file = target_prefix_frac_rescore_file
@@ -277,7 +277,7 @@ def gen_and_reprocess_nbest(args):
                         + "."
                         + args.target_lang,
                         pre_gen + "/reference_file",
-                        bpe_symbol=args.post_process,
+                        bpe_symbol=args.remove_bpe,
                         target_prefix_frac=args.target_prefix_frac,
                     )
                 else:
@@ -298,7 +298,7 @@ def gen_and_reprocess_nbest(args):
                         + "."
                         + args.target_lang,
                         pre_gen + "/reference_file",
-                        bpe_symbol=args.post_process,
+                        bpe_symbol=args.remove_bpe,
                         source_prefix_frac=args.source_prefix_frac,
                     )
                 else:
@@ -313,7 +313,7 @@ def gen_and_reprocess_nbest(args):
                 pre_gen + "/right_to_left_rescore_data." + args.target_lang,
                 pre_gen + "/right_to_left_reference_file",
                 right_to_left=True,
-                bpe_symbol=args.post_process,
+                bpe_symbol=args.remove_bpe,
             )
 
         print("STEP 3: binarize the translations")

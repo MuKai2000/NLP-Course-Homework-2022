@@ -38,22 +38,10 @@ class TestFileIO(unittest.TestCase):
         self.assertEqual(s, self._tmpfile_contents)
 
     def test_file_io_oss(self):
-        # Mock iopath to simulate oss environment.
-        sys.modules["iopath"] = MagicMock()
+        # Mock fvcore to simulate oss environment.
+        sys.modules["fvcore"] = MagicMock()
         from fairseq.file_io import PathManager
 
         with PathManager.open(os.path.join(self._tmpdir, "test.txt"), "r") as f:
             s = f.read()
         self.assertEqual(s, self._tmpfile_contents)
-
-    def test_file_io_async(self):
-        # ioPath `PathManager` is initialized after the first `opena` call.
-        try:
-            from fairseq.file_io import PathManager
-
-            _asyncfile = os.path.join(self._tmpdir, "async.txt")
-            f = PathManager.opena(_asyncfile, "wb")
-            f.close()
-
-        finally:
-            self.assertTrue(PathManager.async_close())

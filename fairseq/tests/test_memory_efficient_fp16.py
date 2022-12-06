@@ -10,7 +10,6 @@ import unittest
 import torch
 from fairseq.optim.adam import FairseqAdam
 from fairseq.optim.fp16_optimizer import MemoryEfficientFP16Optimizer
-from omegaconf import OmegaConf
 
 
 @unittest.skipIf(not torch.cuda.is_available(), "test requires a GPU")
@@ -27,36 +26,25 @@ class TestMemoryEfficientFP16(unittest.TestCase):
         params = list(model.parameters())
 
         # initialize memory efficient FP16 optimizer
-        # with pseudo DictConfigs
         optimizer = FairseqAdam(
-            cfg=OmegaConf.create(
-                vars(
-                    argparse.Namespace(
-                        adam_betas="(0.9, 0.999)",
-                        adam_eps=1e-8,
-                        weight_decay=0.0,
-                        lr=[0.00001],
-                    )
-                )
+            argparse.Namespace(
+                lr=[0.00001],
+                adam_betas="(0.9, 0.999)",
+                adam_eps=1e-8,
+                weight_decay=0.0,
             ),
-            params=params,
+            params,
         )
         me_optimizer = MemoryEfficientFP16Optimizer(
-            cfg=OmegaConf.create(
-                {
-                    "common": vars(
-                        argparse.Namespace(
-                            fp16_init_scale=1,
-                            fp16_scale_window=1,
-                            fp16_scale_tolerance=1,
-                            threshold_loss_scale=1,
-                            min_loss_scale=1e-4,
-                        )
-                    )
-                }
+            argparse.Namespace(
+                fp16_init_scale=1,
+                fp16_scale_window=1,
+                fp16_scale_tolerance=1,
+                threshold_loss_scale=1,
+                min_loss_scale=1e-4,
             ),
-            params=params,
-            optimizer=optimizer,
+            params,
+            optimizer,
         )
 
         # optimizer state is created in the first step

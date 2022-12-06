@@ -3,21 +3,13 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass
 from fairseq.data.legacy.masked_lm_dictionary import MaskedLMDictionary
-from fairseq.tasks.translation import TranslationConfig, TranslationTask
+from fairseq.tasks.translation import TranslationTask
 
 from . import register_task
 
 
-@dataclass
-class TranslationFromPretrainedXLMConfig(TranslationConfig):
-    pass
-
-
-@register_task(
-    "translation_from_pretrained_xlm", dataclass=TranslationFromPretrainedXLMConfig
-)
+@register_task("translation_from_pretrained_xlm")
 class TranslationFromPretrainedXLMTask(TranslationTask):
     """
     Same as TranslationTask except use the MaskedLMDictionary class so that

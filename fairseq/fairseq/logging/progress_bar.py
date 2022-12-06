@@ -21,6 +21,7 @@ import torch
 
 from .meters import AverageMeter, StopwatchMeter, TimeMeter
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,24 +29,13 @@ def progress_bar(
     iterator,
     log_format: Optional[str] = None,
     log_interval: int = 100,
-    log_file: Optional[str] = None,
     epoch: Optional[int] = None,
     prefix: Optional[str] = None,
-    aim_repo: Optional[str] = None,
-    aim_run_hash: Optional[str] = None,
-    aim_param_checkpoint_dir: Optional[str] = None,
     tensorboard_logdir: Optional[str] = None,
     default_log_format: str = "tqdm",
-    wandb_project: Optional[str] = None,
-    wandb_run_name: Optional[str] = None,
-    azureml_logging: Optional[bool] = False,
 ):
     if log_format is None:
         log_format = default_log_format
-    if log_file is not None:
-        handler = logging.FileHandler(filename=log_file)
-        logger.addHandler(handler)
-
     if log_format == "tqdm" and not sys.stderr.isatty():
         log_format = "simple"
 
@@ -60,30 +50,15 @@ def progress_bar(
     else:
         raise ValueError("Unknown log format: {}".format(log_format))
 
-    if aim_repo:
-        bar = AimProgressBarWrapper(
-            bar,
-            aim_repo=aim_repo,
-            aim_run_hash=aim_run_hash,
-            aim_param_checkpoint_dir=aim_param_checkpoint_dir,
-        )
-
     if tensorboard_logdir:
         try:
             # [FB only] custom wrapper for TensorBoard
             import palaas  # noqa
-
             from .fb_tbmf_wrapper import FbTbmfWrapper
 
             bar = FbTbmfWrapper(bar, log_interval)
         except ImportError:
             bar = TensorboardProgressBarWrapper(bar, tensorboard_logdir)
-
-    if wandb_project:
-        bar = WandBProgressBarWrapper(bar, wandb_project, run_name=wandb_run_name)
-
-    if azureml_logging:
-        bar = AzureMLProgressBarWrapper(bar)
 
     return bar
 
@@ -139,7 +114,7 @@ class BaseProgressBar(object):
         if epoch is not None:
             self.prefix += "epoch {:03d}".format(epoch)
         if prefix is not None:
-            self.prefix += (" | " if self.prefix != "" else "") + prefix
+            self.prefix += " | {}".format(prefix)
 
     def __len__(self):
         return len(self.iterable)
@@ -160,10 +135,6 @@ class BaseProgressBar(object):
     def print(self, stats, tag=None, step=None):
         """Print end-of-epoch stats."""
         raise NotImplementedError
-
-    def update_config(self, config):
-        """Log latest configuration."""
-        pass
 
     def _str_commas(self, stats):
         return ", ".join(key + "=" + stats[key].strip() for key in stats.keys())
@@ -322,94 +293,10 @@ class TqdmProgressBar(BaseProgressBar):
 
 
 try:
-    import functools
-
-    from aim import Repo as AimRepo
-
-    @functools.lru_cache()
-    def get_aim_run(repo, run_hash):
-        from aim import Run
-
-        return Run(run_hash=run_hash, repo=repo)
-
-except ImportError:
-    get_aim_run = None
-    AimRepo = None
-
-
-class AimProgressBarWrapper(BaseProgressBar):
-    """Log to Aim."""
-
-    def __init__(self, wrapped_bar, aim_repo, aim_run_hash, aim_param_checkpoint_dir):
-        self.wrapped_bar = wrapped_bar
-
-        if get_aim_run is None:
-            self.run = None
-            logger.warning("Aim not found, please install with: pip install aim")
-        else:
-            logger.info(f"Storing logs at Aim repo: {aim_repo}")
-
-            if not aim_run_hash:
-                # Find run based on save_dir parameter
-                query = f"run.checkpoint.save_dir == '{aim_param_checkpoint_dir}'"
-                try:
-                    runs_generator = AimRepo(aim_repo).query_runs(query)
-                    run = next(runs_generator.iter_runs())
-                    aim_run_hash = run.run.hash
-                except Exception:
-                    pass
-
-            if aim_run_hash:
-                logger.info(f"Appending to run: {aim_run_hash}")
-
-            self.run = get_aim_run(aim_repo, aim_run_hash)
-
-    def __iter__(self):
-        return iter(self.wrapped_bar)
-
-    def log(self, stats, tag=None, step=None):
-        """Log intermediate stats to Aim."""
-        self._log_to_aim(stats, tag, step)
-        self.wrapped_bar.log(stats, tag=tag, step=step)
-
-    def print(self, stats, tag=None, step=None):
-        """Print end-of-epoch stats."""
-        self._log_to_aim(stats, tag, step)
-        self.wrapped_bar.print(stats, tag=tag, step=step)
-
-    def update_config(self, config):
-        """Log latest configuration."""
-        if self.run is not None:
-            for key in config:
-                self.run.set(key, config[key], strict=False)
-        self.wrapped_bar.update_config(config)
-
-    def _log_to_aim(self, stats, tag=None, step=None):
-        if self.run is None:
-            return
-
-        if step is None:
-            step = stats["num_updates"]
-
-        if "train" in tag:
-            context = {"tag": tag, "subset": "train"}
-        elif "val" in tag:
-            context = {"tag": tag, "subset": "val"}
-        else:
-            context = {"tag": tag}
-
-        for key in stats.keys() - {"num_updates"}:
-            self.run.track(stats[key], name=key, step=step, context=context)
-
-
-try:
     _tensorboard_writers = {}
-    from torch.utils.tensorboard import SummaryWriter
+    from tensorboardX import SummaryWriter
 except ImportError:
-    try:
-        from tensorboardX import SummaryWriter
-    except ImportError:
-        SummaryWriter = None
+    SummaryWriter = None
 
 
 def _close_writers():
@@ -429,7 +316,7 @@ class TensorboardProgressBarWrapper(BaseProgressBar):
 
         if SummaryWriter is None:
             logger.warning(
-                "tensorboard not found, please install with: pip install tensorboard"
+                "tensorboard not found, please install with: pip install tensorboardX"
             )
 
     def _writer(self, key):
@@ -454,11 +341,6 @@ class TensorboardProgressBarWrapper(BaseProgressBar):
         self._log_to_tensorboard(stats, tag, step)
         self.wrapped_bar.print(stats, tag=tag, step=step)
 
-    def update_config(self, config):
-        """Log latest configuration."""
-        # TODO add hparams to Tensorboard
-        self.wrapped_bar.update_config(config)
-
     def _log_to_tensorboard(self, stats, tag=None, step=None):
         writer = self._writer(tag or "")
         if writer is None:
@@ -470,113 +352,4 @@ class TensorboardProgressBarWrapper(BaseProgressBar):
                 writer.add_scalar(key, stats[key].val, step)
             elif isinstance(stats[key], Number):
                 writer.add_scalar(key, stats[key], step)
-            elif torch.is_tensor(stats[key]) and stats[key].numel() == 1:
-                writer.add_scalar(key, stats[key].item(), step)
         writer.flush()
-
-
-try:
-    import wandb
-except ImportError:
-    wandb = None
-
-
-class WandBProgressBarWrapper(BaseProgressBar):
-    """Log to Weights & Biases."""
-
-    def __init__(self, wrapped_bar, wandb_project, run_name=None):
-        self.wrapped_bar = wrapped_bar
-        if wandb is None:
-            logger.warning("wandb not found, pip install wandb")
-            return
-
-        # reinit=False to ensure if wandb.init() is called multiple times
-        # within one process it still references the same run
-        wandb.init(project=wandb_project, reinit=False, name=run_name)
-
-    def __iter__(self):
-        return iter(self.wrapped_bar)
-
-    def log(self, stats, tag=None, step=None):
-        """Log intermediate stats to tensorboard."""
-        self._log_to_wandb(stats, tag, step)
-        self.wrapped_bar.log(stats, tag=tag, step=step)
-
-    def print(self, stats, tag=None, step=None):
-        """Print end-of-epoch stats."""
-        self._log_to_wandb(stats, tag, step)
-        self.wrapped_bar.print(stats, tag=tag, step=step)
-
-    def update_config(self, config):
-        """Log latest configuration."""
-        if wandb is not None:
-            wandb.config.update(config)
-        self.wrapped_bar.update_config(config)
-
-    def _log_to_wandb(self, stats, tag=None, step=None):
-        if wandb is None:
-            return
-        if step is None:
-            step = stats["num_updates"]
-
-        prefix = "" if tag is None else tag + "/"
-
-        for key in stats.keys() - {"num_updates"}:
-            if isinstance(stats[key], AverageMeter):
-                wandb.log({prefix + key: stats[key].val}, step=step)
-            elif isinstance(stats[key], Number):
-                wandb.log({prefix + key: stats[key]}, step=step)
-
-
-try:
-    from azureml.core import Run
-except ImportError:
-    Run = None
-
-
-class AzureMLProgressBarWrapper(BaseProgressBar):
-    """Log to Azure ML"""
-
-    def __init__(self, wrapped_bar):
-        self.wrapped_bar = wrapped_bar
-        if Run is None:
-            logger.warning("azureml.core not found, pip install azureml-core")
-            return
-        self.run = Run.get_context()
-
-    def __exit__(self, *exc):
-        if Run is not None:
-            self.run.complete()
-        return False
-
-    def __iter__(self):
-        return iter(self.wrapped_bar)
-
-    def log(self, stats, tag=None, step=None):
-        """Log intermediate stats to AzureML"""
-        self._log_to_azureml(stats, tag, step)
-        self.wrapped_bar.log(stats, tag=tag, step=step)
-
-    def print(self, stats, tag=None, step=None):
-        """Print end-of-epoch stats"""
-        self._log_to_azureml(stats, tag, step)
-        self.wrapped_bar.print(stats, tag=tag, step=step)
-
-    def update_config(self, config):
-        """Log latest configuration."""
-        self.wrapped_bar.update_config(config)
-
-    def _log_to_azureml(self, stats, tag=None, step=None):
-        if Run is None:
-            return
-        if step is None:
-            step = stats["num_updates"]
-
-        prefix = "" if tag is None else tag + "/"
-
-        for key in stats.keys() - {"num_updates"}:
-            name = prefix + key
-            if isinstance(stats[key], AverageMeter):
-                self.run.log_row(name=name, **{"step": step, key: stats[key].val})
-            elif isinstance(stats[key], Number):
-                self.run.log_row(name=name, **{"step": step, key: stats[key]})

@@ -58,7 +58,7 @@ def cli_main():
 
         def score(fdsys):
             with open(args.ref) as fdref:
-                print(sacrebleu.corpus_bleu(fdsys, [fdref]).format())
+                print(sacrebleu.corpus_bleu(fdsys, [fdref]))
 
     elif args.sentence_bleu:
 
@@ -78,13 +78,7 @@ def cli_main():
 
         def score(fdsys):
             with open(args.ref) as fdref:
-                scorer = bleu.Scorer(
-                    bleu.BleuConfig(
-                        pad=dict.pad(),
-                        eos=dict.eos(),
-                        unk=dict.unk(),
-                    )
-                )
+                scorer = bleu.Scorer(dict.pad(), dict.eos(), dict.unk())
                 for sys_tok, ref_tok in zip(readlines(fdsys), readlines(fdref)):
                     sys_tok = dict.encode_line(sys_tok)
                     ref_tok = dict.encode_line(ref_tok)

@@ -3,11 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from .configs import FairseqDataclass
-from .constants import ChoiceEnum
+from .utils import ChoiceEnum, FairseqDataclass
 
 
-__all__ = [
-    "FairseqDataclass",
-    "ChoiceEnum",
-]
+__all__ = ["FairseqDataclass", "ChoiceEnum"]

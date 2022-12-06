@@ -14,6 +14,12 @@ src=en
 tgt=zh
 
 tag=baseline_nlplab
+if [ ! -d "${model_dir}/${tag}" ]; then
+    mkdir "${model_dir}/${tag}"
+fi
+
+# cp ${pwd}/train.sh ${model_dir}/${tag}
+# cp ${root}/fairseq/fairseq/models/transformer/transformer_base.py ${model_dir}/${tag}
 
 CUDA_VISIBLE_DEVICES=0 nohup fairseq-train ${data_dir}/data-bin \
 	--source-lang ${src} --target-lang ${tgt}  \
@@ -24,5 +30,6 @@ CUDA_VISIBLE_DEVICES=0 nohup fairseq-train ${data_dir}/data-bin \
     --max-update 200000  --warmup-updates 4000 --warmup-init-lr '1e-07' \
     --num-workers 8 \
     --keep-last-epochs 3 \
+    --skip-invalid-size-inputs-valid-test \
 	--save-dir ${model_dir}/${tag}/checkpoints \
     --tensorboard-logdir ${model_dir}/${tag}/tensorboard &

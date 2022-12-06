@@ -4,9 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from torch import nn
 from torch.nn.modules.utils import _single
-from torch import Tensor
 
 
 class ConvTBC(torch.nn.Module):
@@ -28,19 +26,10 @@ class ConvTBC(torch.nn.Module):
         )
         self.bias = torch.nn.Parameter(torch.Tensor(out_channels))
 
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        nn.init.xavier_normal_(self.weight)
-        nn.init.zeros_(self.bias)
-
-    def conv_tbc(self, input: Tensor):
+    def forward(self, input):
         return torch.conv_tbc(
             input.contiguous(), self.weight, self.bias, self.padding[0]
         )
-
-    def forward(self, input: Tensor):
-        return self.conv_tbc(input)
 
     def __repr__(self):
         s = (

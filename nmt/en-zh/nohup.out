@@ -572,3 +572,62 @@ RuntimeError
 2022-12-06 13:54:51 | INFO | fairseq.checkpoint_utils | Preparing to save checkpoint for epoch 2 @ 32 updates
 2022-12-06 13:54:51 | INFO | fairseq.trainer | Saving checkpoint to /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/niutrans-smt-sample/model/baseline_nlplab/checkpoints/checkpoint2.pt
 2022-12-06 13:54:55 | INFO | fairseq.trainer | Finished saving checkpoint to /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/niutrans-smt-sample/model/baseline_nlplab/checkpoints/checkpoint2.pt
+Traceback (most recent call last):
+  File "/home/koukq0907/miniconda3/envs/fairseq/bin/fairseq-train", line 8, in <module>
+    sys.exit(cli_main())
+  File "/home/koukq0907/NLP/fairseq/fairseq_cli/train.py", line 542, in cli_main
+    args = options.parse_args_and_arch(parser, modify_parser=modify_parser)
+  File "/home/koukq0907/NLP/fairseq/fairseq/options.py", line 153, in parse_args_and_arch
+    raise RuntimeError()
+RuntimeError
+Traceback (most recent call last):
+  File "/home/koukq0907/miniconda3/envs/fairseq/bin/fairseq-train", line 8, in <module>
+    sys.exit(cli_main())
+  File "/home/koukq0907/NLP/fairseq/fairseq_cli/train.py", line 542, in cli_main
+    args = options.parse_args_and_arch(parser, modify_parser=modify_parser)
+  File "/home/koukq0907/NLP/fairseq/fairseq/options.py", line 153, in parse_args_and_arch
+    raise RuntimeError()
+RuntimeError
+Traceback (most recent call last):
+  File "/home/koukq0907/miniconda3/envs/fairseq/bin/fairseq-train", line 8, in <module>
+    sys.exit(cli_main())
+  File "/home/koukq0907/NLP/fairseq/fairseq_cli/train.py", line 542, in cli_main
+    args = options.parse_args_and_arch(parser, modify_parser=modify_parser)
+  File "/home/koukq0907/NLP/fairseq/fairseq/options.py", line 153, in parse_args_and_arch
+    raise RuntimeError()
+RuntimeError
+Traceback (most recent call last):
+  File "/home/koukq0907/NLP-Course-Homework-2022/fairseq/fairseq_cli/train.py", line 564, in <module>
+    cli_main()
+  File "/home/koukq0907/NLP-Course-Homework-2022/fairseq/fairseq_cli/train.py", line 542, in cli_main
+    args = options.parse_args_and_arch(parser, modify_parser=modify_parser)
+  File "/home/koukq0907/NLP/fairseq/fairseq/options.py", line 153, in parse_args_and_arch
+    raise RuntimeError()
+RuntimeError
+-e [34mRun command: 
+python3 -u /home/koukq0907/NLP-Course-Homework-2022/fairseq/fairseq_cli/train.py 
+    /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/niutrans-smt-sample/data
+    --train-config /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/config/train.yaml
+    --task translation
+    --skip-invalid-size-inputs-valid-test
+    --update-freq 1
+    --save-dir /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/niutrans-smt-sample/model
+    --tensorboard-logdir /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/niutrans-smt-sample/model [0m
+-e [34mRun command: 
+python3 -u /home/koukq0907/NLP-Course-Homework-2022/fairseq/fairseq_cli/train.py 
+    /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/niutrans-smt-sample/data
+    --train-config /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/config/train.yaml
+    --task translation
+    --skip-invalid-size-inputs-valid-test
+    --update-freq 1
+    --save-dir /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/niutrans-smt-sample/model
+    --tensorboard-logdir /home/koukq0907/NLP-Course-Homework-2022/nmt/en-zh/niutrans-smt-sample/model [0m
+None
+Traceback (most recent call last):
+  File "/home/koukq0907/NLP-Course-Homework-2022/fairseq/fairseq_cli/train.py", line 564, in <module>
+    cli_main()
+  File "/home/koukq0907/NLP-Course-Homework-2022/fairseq/fairseq_cli/train.py", line 542, in cli_main
+    args = options.parse_args_and_arch(parser, modify_parser=modify_parser)
+  File "/home/koukq0907/NLP/fairseq/fairseq/options.py", line 154, in parse_args_and_arch
+    raise RuntimeError()
+RuntimeError

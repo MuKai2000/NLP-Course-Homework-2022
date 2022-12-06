@@ -6,12 +6,11 @@
 import re
 
 from fairseq.data.encoders import register_tokenizer
-from fairseq.dataclass import FairseqDataclass
 
 
-@register_tokenizer("space", dataclass=FairseqDataclass)
+@register_tokenizer("space")
 class SpaceTokenizer(object):
-    def __init__(self, *unused):
+    def __init__(self, source_lang=None, target_lang=None):
         self.space_tok = re.compile(r"\s+")
 
     def encode(self, x: str) -> str:

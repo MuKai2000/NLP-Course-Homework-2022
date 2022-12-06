@@ -96,37 +96,25 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
         # models.build_model(). This allows multitask type of sub-class can
         # build models other than the input lang_pairs
         self.model_lang_pairs = self.lang_pairs
-        self.source_langs = [d.split("-")[0] for d in self.lang_pairs]
-        self.target_langs = [d.split("-")[1] for d in self.lang_pairs]
-        self.check_dicts(self.dicts, self.source_langs, self.target_langs)
-
         self.sampling_method = SamplingMethod.build_sampler(args, self)
         self.data_manager = MultilingualDatasetManager.setup_data_manager(
             args, self.lang_pairs, langs, dicts, self.sampling_method
         )
-
-    def check_dicts(self, dicts, source_langs, target_langs):
-        if self.args.source_dict is not None or self.args.target_dict is not None:
-            # no need to check whether the source side and target side are sharing dictionaries
-            return
-        src_dict = dicts[source_langs[0]]
-        tgt_dict = dicts[target_langs[0]]
-        for src_lang in source_langs:
-            assert (
-                src_dict == dicts[src_lang]
-            ), "Diffrent dictionary are specified for different source languages; "
-            "TranslationMultiSimpleEpochTask only supports one shared dictionary across all source languages"
-        for tgt_lang in target_langs:
-            assert (
-                tgt_dict == dicts[tgt_lang]
-            ), "Diffrent dictionary are specified for different target languages; "
-            "TranslationMultiSimpleEpochTask only supports one shared dictionary across all target languages"
 
     @classmethod
     def setup_task(cls, args, **kwargs):
         langs, dicts, training = MultilingualDatasetManager.prepare(
             cls.load_dictionary, args, **kwargs
         )
+        dict0 = None
+        for _, lang_dict in dicts.items():
+            if dict0 is None:
+                dict0 = lang_dict
+            else:
+                assert (
+                    dict0 == lang_dict
+                ), "Diffrent dictionary are specified for different languages; "
+                "TranslationMultiSimpleEpochTask only supports one shared dictionary across all languages"
         return cls(args, langs, dicts, training)
 
     def has_sharded_data(self, split):
@@ -140,16 +128,12 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
         """
         if split in self.datasets:
             dataset = self.datasets[split]
-            if self.has_sharded_data(split):
-                if self.args.virtual_epoch_size is not None:
-                    if dataset.load_next_shard:
-                        shard_epoch = dataset.shard_epoch
-                    else:
-                        # no need to load next shard so skip loading
-                        # also this avoid always loading from beginning of the data
-                        return
-                else:
-                    shard_epoch = epoch
+            if self.has_sharded_data(split) and dataset.load_next_shard:
+                shard_epoch = dataset.shard_epoch
+            else:
+                # no need to load next shard so skip loading
+                # also this avoid always loading from beginning of the data
+                return
         else:
             # estimate the shard epoch from virtual data size and virtual epoch size
             shard_epoch = self.data_manager.estimate_global_pass_epoch(epoch)
@@ -159,7 +143,7 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
             del self.datasets[split]
             logger.info("old dataset deleted manually")
             logger.info(f"mem usage: {data_utils.get_mem_usage()}")
-        self.datasets[split] = self.data_manager.load_dataset(
+        self.datasets[split] = self.data_manager.load_sampled_multi_epoch_dataset(
             split,
             self.training,
             epoch=epoch,
@@ -216,8 +200,8 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
             models, args, seq_gen_cls=None, extra_gen_cls_kwargs=extra_gen_cls_kwargs
         )
 
-    def build_model(self, args, from_checkpoint=False):
-        return super().build_model(args, from_checkpoint)
+    def build_model(self, args):
+        return super().build_model(args)
 
     def valid_step(self, sample, model, criterion):
         loss, sample_size, logging_output = super().valid_step(sample, model, criterion)
@@ -265,11 +249,11 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
 
     @property
     def source_dictionary(self):
-        return self.data_manager.get_source_dictionary(self.source_langs[0])
+        return next(iter(self.dicts.values()))
 
     @property
     def target_dictionary(self):
-        return self.data_manager.get_target_dictionary(self.target_langs[0])
+        return next(iter(self.dicts.values()))
 
     def create_batch_sampler_func(
         self,
@@ -349,9 +333,6 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
         epoch=1,
         data_buffer_size=0,
         disable_iterator_cache=False,
-        skip_remainder_batch=False,
-        grouped_shuffling=False,
-        update_epoch_batch_itr=False,
     ):
         """
         Get an iterator that yields batches of data from the given dataset.
@@ -384,12 +365,6 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
             disable_iterator_cache (bool, optional): don't cache the
                 EpochBatchIterator (ignores `FairseqTask::can_reuse_epoch_itr`)
                 (default: False).
-            grouped_shuffling (bool, optional): group batches with each groups
-                containing num_shards batches and shuffle groups. Reduces difference
-                between sequence lengths among workers for batches sorted by length.
-            update_epoch_batch_itr (bool optional): if true then donot use the cached
-                batch iterator for the epoch
-
         Returns:
             ~fairseq.iterators.EpochBatchIterator: a batched iterator over the
                 given dataset split
@@ -413,8 +388,6 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
                 epoch=epoch,
                 data_buffer_size=data_buffer_size,
                 disable_iterator_cache=disable_iterator_cache,
-                skip_remainder_batch=skip_remainder_batch,
-                update_epoch_batch_itr=update_epoch_batch_itr,
             )
             self.dataset_to_epoch_iter[dataset] = batch_iter
             return batch_iter

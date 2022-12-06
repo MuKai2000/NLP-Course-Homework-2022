@@ -10,16 +10,13 @@ except ImportError:
 import contextlib
 import itertools
 import logging
-import re
+import os
 import warnings
 from typing import Optional, Tuple
 
 import numpy as np
 import torch
 
-from fairseq.file_io import PathManager
-from fairseq import utils
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +24,7 @@ logger = logging.getLogger(__name__)
 def infer_language_pair(path):
     """Infer language pair from filename: <split>.<lang1>-<lang2>.(...).idx"""
     src, dst = None, None
-    for filename in PathManager.ls(path):
+    for filename in os.listdir(path):
         parts = filename.split(".")
         if len(parts) >= 3 and len(parts[1].split("-")) == 2:
             return parts[1].split("-")
@@ -42,16 +39,13 @@ def collate_tokens(
     move_eos_to_beginning=False,
     pad_to_length=None,
     pad_to_multiple=1,
-    pad_to_bsz=None,
 ):
     """Convert a list of 1d tensors into a padded 2d tensor."""
     size = max(v.size(0) for v in values)
     size = size if pad_to_length is None else max(size, pad_to_length)
     if pad_to_multiple != 1 and size % pad_to_multiple != 0:
         size = int(((size - 0.1) // pad_to_multiple + 1) * pad_to_multiple)
-
-    batch_size = len(values) if pad_to_bsz is None else max(len(values), pad_to_bsz)
-    res = values[0].new(batch_size, size).fill_(pad_idx)
+    res = values[0].new(len(values), size).fill_(pad_idx)
 
     def copy_tensor(src, dst):
         assert dst.numel() == src.numel()
@@ -86,19 +80,13 @@ def load_indexed_dataset(
             combine 'data-bin/train', 'data-bin/train1', ... and return a
             single ConcatDataset instance.
     """
-    import fairseq.data.indexed_dataset as indexed_dataset
     from fairseq.data.concat_dataset import ConcatDataset
+    import fairseq.data.indexed_dataset as indexed_dataset
 
     datasets = []
     for k in itertools.count():
         path_k = path + (str(k) if k > 0 else "")
-        try:
-            path_k = indexed_dataset.get_indexed_dataset_to_local(path_k)
-        except Exception as e:
-            if "StorageException: [404] Path not found" in str(e):
-                logger.warning(f"path_k: {e} not found")
-            else:
-                raise e
+        path_k = indexed_dataset.get_indexed_dataset_to_local(path_k)
 
         dataset_impl_k = dataset_impl
         if dataset_impl_k is None:
@@ -111,7 +99,7 @@ def load_indexed_dataset(
         )
         if dataset is None:
             break
-        logger.info("loaded {:,} examples from: {}".format(len(dataset), path_k))
+        logger.info("loaded {} examples from: {}".format(len(dataset), path_k))
         datasets.append(dataset)
         if not combine:
             break
@@ -176,6 +164,12 @@ def _filter_by_size_dynamic(indices, size_fn, max_positions, raise_exception=Fal
                 for key in intersect_keys
             )
         else:
+            # Hacky as heck, for the specific case of multilingual training with RoundRobin.
+            if isinstance(size_fn(idx), dict) and isinstance(max_positions, tuple):
+                return all(
+                    a is None or b is None or compare_leq(a, b)
+                    for a, b in zip(size_fn(idx).values(), max_positions)
+                )
             # For MultiCorpusSampledDataset, will generalize it later
             if not isinstance(size_fn(idx), Iterable):
                 return all(size_fn(idx) <= b for b in max_positions)
@@ -282,7 +276,6 @@ def filter_paired_dataset_indices_by_size(src_sizes, tgt_sizes, indices, max_siz
 def batch_by_size(
     indices,
     num_tokens_fn,
-    num_tokens_vec=None,
     max_tokens=None,
     max_sentences=None,
     required_batch_size_multiple=1,
@@ -296,8 +289,6 @@ def batch_by_size(
         indices (List[int]): ordered list of dataset indices
         num_tokens_fn (callable): function that returns the number of tokens at
             a given index
-        num_tokens_vec (List[int], optional): precomputed vector of the number
-            of tokens for each index in indices (to enable faster batch generation)
         max_tokens (int, optional): max number of tokens in each batch
             (default: None).
         max_sentences (int, optional): max number of sentences in each
@@ -310,49 +301,30 @@ def batch_by_size(
     """
     try:
         from fairseq.data.data_utils_fast import (
-            batch_by_size_fn,
-            batch_by_size_vec,
+            batch_by_size_fast,
             batch_fixed_shapes_fast,
         )
     except ImportError:
         raise ImportError(
-            "Please build Cython components with: "
-            "`python setup.py build_ext --inplace`"
-        )
-    except ValueError:
-        raise ValueError(
-            "Please build (or rebuild) Cython components with `python setup.py build_ext --inplace`."
+            "Please build Cython components with: `pip install --editable .` "
+            "or `python setup.py build_ext --inplace`"
         )
 
-    # added int() to avoid TypeError: an integer is required
-    max_tokens = int(max_tokens) if max_tokens is not None else -1
+    max_tokens = max_tokens if max_tokens is not None else -1
     max_sentences = max_sentences if max_sentences is not None else -1
     bsz_mult = required_batch_size_multiple
 
     if not isinstance(indices, np.ndarray):
         indices = np.fromiter(indices, dtype=np.int64, count=-1)
 
-    if num_tokens_vec is not None and not isinstance(num_tokens_vec, np.ndarray):
-        num_tokens_vec = np.fromiter(num_tokens_vec, dtype=np.int64, count=-1)
-
     if fixed_shapes is None:
-        if num_tokens_vec is None:
-            return batch_by_size_fn(
-                indices,
-                num_tokens_fn,
-                max_tokens,
-                max_sentences,
-                bsz_mult,
-            )
-        else:
-            return batch_by_size_vec(
-                indices,
-                num_tokens_vec,
-                max_tokens,
-                max_sentences,
-                bsz_mult,
-            )
-
+        return batch_by_size_fast(
+            indices,
+            num_tokens_fn,
+            max_tokens,
+            max_sentences,
+            bsz_mult,
+        )
     else:
         fixed_shapes = np.array(fixed_shapes, dtype=np.int64)
         sort_order = np.lexsort(
@@ -372,21 +344,10 @@ def post_process(sentence: str, symbol: str):
         sentence = sentence.replace(" ", "").replace("_", " ").strip()
     elif symbol == "letter":
         sentence = sentence.replace(" ", "").replace("|", " ").strip()
-    elif symbol == "silence":
-        import re
-
-        sentence = sentence.replace("<SIL>", "")
-        sentence = re.sub(" +", " ", sentence).strip()
     elif symbol == "_EOW":
         sentence = sentence.replace(" ", "").replace("_EOW", " ").strip()
-    elif symbol in {"subword_nmt", "@@ ", "@@"}:
-        if symbol == "subword_nmt":
-            symbol = "@@ "
+    elif symbol is not None and symbol != "none":
         sentence = (sentence + " ").replace(symbol, "").rstrip()
-    elif symbol == "none":
-        pass
-    elif symbol is not None:
-        raise NotImplementedError(f"Unknown post_process option: {symbol}")
     return sentence
 
 
@@ -400,8 +361,6 @@ def compute_mask_indices(
     min_masks: int = 0,
     no_overlap: bool = False,
     min_space: int = 0,
-    require_same_masks: bool = True,
-    mask_dropout: float = 0.0,
 ) -> np.ndarray:
     """
     Computes random mask spans for a given shape
@@ -421,8 +380,6 @@ def compute_mask_indices(
         min_masks: minimum number of masked spans
         no_overlap: if false, will switch to an alternative recursive algorithm that prevents spans from overlapping
         min_space: only used if no_overlap is True, this is how many elements to keep unmasked between spans
-        require_same_masks: if true, will randomly drop out masks until same amount of masks remains in each sample
-        mask_dropout: randomly dropout this percentage of masks in each example
     """
 
     bsz, all_sz = shape
@@ -476,7 +433,7 @@ def compute_mask_indices(
                 new_parts = []
                 if span_start - s - min_space >= keep_length:
                     new_parts.append((s, span_start - min_space + 1))
-                if e - span_start - length - min_space > keep_length:
+                if e - span_start - keep_length - min_space > keep_length:
                     new_parts.append((span_start + length + min_space, e))
                 return new_parts
 
@@ -514,14 +471,8 @@ def compute_mask_indices(
 
     min_len = min([len(m) for m in mask_idcs])
     for i, mask_idc in enumerate(mask_idcs):
-        if len(mask_idc) > min_len and require_same_masks:
+        if len(mask_idc) > min_len:
             mask_idc = np.random.choice(mask_idc, min_len, replace=False)
-        if mask_dropout > 0:
-            num_holes = np.rint(len(mask_idc) * mask_dropout).astype(int)
-            mask_idc = np.random.choice(
-                mask_idc, len(mask_idc) - num_holes, replace=False
-            )
-
         mask[i, mask_idc] = True
 
     return mask
@@ -537,68 +488,12 @@ def get_mem_usage():
         return "N/A"
 
 
-# lens: torch.LongTensor
-# returns: torch.BoolTensor
-def lengths_to_padding_mask(lens):
+def lengths_to_padding_mask(lens: torch.LongTensor) -> torch.BoolTensor:
     bsz, max_lens = lens.size(0), torch.max(lens).item()
     mask = torch.arange(max_lens).to(lens.device).view(1, max_lens)
     mask = mask.expand(bsz, -1) >= lens.view(bsz, 1).expand(-1, max_lens)
     return mask
 
 
-# lens: torch.LongTensor
-# returns: torch.BoolTensor
-def lengths_to_mask(lens):
+def lengths_to_mask(lens: torch.LongTensor) -> torch.BoolTensor:
     return ~lengths_to_padding_mask(lens)
-
-
-def get_buckets(sizes, num_buckets):
-    buckets = np.unique(
-        np.percentile(
-            sizes,
-            np.linspace(0, 100, num_buckets + 1),
-            interpolation="lower",
-        )[1:]
-    )
-    return buckets
-
-
-def get_bucketed_sizes(orig_sizes, buckets):
-    sizes = np.copy(orig_sizes)
-    assert np.min(sizes) >= 0
-    start_val = -1
-    for end_val in buckets:
-        mask = (sizes > start_val) & (sizes <= end_val)
-        sizes[mask] = end_val
-        start_val = end_val
-    return sizes
-
-
-def _find_extra_valid_paths(dataset_path: str) -> set:
-    paths = utils.split_paths(dataset_path)
-    all_valid_paths = set()
-    for sub_dir in paths:
-        contents = PathManager.ls(sub_dir)
-        valid_paths = [c for c in contents if re.match("valid*[0-9].*", c) is not None]
-        all_valid_paths |= {os.path.basename(p) for p in valid_paths}
-    # Remove .bin, .idx etc
-    roots = {os.path.splitext(p)[0] for p in all_valid_paths}
-    return roots
-
-
-def raise_if_valid_subsets_unintentionally_ignored(train_cfg) -> None:
-    """Raises if there are paths matching 'valid*[0-9].*' which are not combined or ignored."""
-    if (
-        train_cfg.dataset.ignore_unused_valid_subsets
-        or train_cfg.dataset.combine_valid_subsets
-        or train_cfg.dataset.disable_validation
-        or not hasattr(train_cfg.task, "data")
-    ):
-        return
-    other_paths = _find_extra_valid_paths(train_cfg.task.data)
-    specified_subsets = train_cfg.dataset.valid_subset.split(",")
-    ignored_paths = [p for p in other_paths if p not in specified_subsets]
-    if ignored_paths:
-        advice = "Set --combine-val to combine them or --ignore-unused-valid-subsets to ignore them."
-        msg = f"Valid paths {ignored_paths} will be ignored. {advice}"
-        raise ValueError(msg)

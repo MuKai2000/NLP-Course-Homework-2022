@@ -13,7 +13,7 @@ SPACE_ESCAPE = chr(9601)
 
 @register_bpe("characters")
 class Characters(object):
-    def __init__(self, *unused):
+    def __init__(self, args):
         pass
 
     @staticmethod

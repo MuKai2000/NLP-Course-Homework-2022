@@ -3,52 +3,16 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from dataclasses import dataclass, field
 import torch
-from omegaconf import II
-
 from fairseq import metrics, utils
-from fairseq.dataclass import ChoiceEnum
 from fairseq.tasks import register_task
-from fairseq.tasks.translation import TranslationConfig, TranslationTask
+from fairseq.tasks.translation import TranslationTask
 
 from .logsumexp_moe import LogSumExpMoE
 from .mean_pool_gating_network import MeanPoolGatingNetwork
 
 
-METHOD_CHOICES = ChoiceEnum(["sMoElp", "sMoEup", "hMoElp", "hMoEup"])
-
-
-@dataclass
-class TranslationMoEConfig(TranslationConfig):
-    method: METHOD_CHOICES = field(
-        default="hMoEup",
-        metadata={"help": "MoE method"},
-    )
-    num_experts: int = field(
-        default=3,
-        metadata={"help": "number of experts"},
-    )
-    mean_pool_gating_network: bool = field(
-        default=False,
-        metadata={"help": "use a simple mean-pooling gating network"},
-    )
-    mean_pool_gating_network_dropout: float = field(
-        default=0,
-        metadata={"help": "dropout for mean-pooling gating network"},
-    )
-    mean_pool_gating_network_encoder_dim: int = field(
-        default=0,
-        metadata={"help": "encoder output dim for mean-pooling gating network"},
-    )
-    gen_expert: int = field(
-        default=0,
-        metadata={"help": "which expert to use for generation"},
-    )
-    sentence_avg: bool = II("optimization.sentence_avg")
-
-
-@register_task("translation_moe", dataclass=TranslationMoEConfig)
+@register_task("translation_moe")
 class TranslationMoETask(TranslationTask):
     """
     Translation task for Mixture of Experts (MoE) models.
@@ -73,60 +37,77 @@ class TranslationMoETask(TranslationTask):
         :prog:
     """
 
-    cfg: TranslationMoEConfig
+    @staticmethod
+    def add_args(parser):
+        """Add task-specific arguments to the parser."""
+        # fmt: off
+        TranslationTask.add_args(parser)
+        parser.add_argument('--method', default='hMoEup',
+                            choices=['sMoElp', 'sMoEup', 'hMoElp', 'hMoEup'])
+        parser.add_argument('--num-experts', default=3, type=int, metavar='N',
+                            help='number of experts')
+        parser.add_argument('--mean-pool-gating-network', action='store_true',
+                            help='use a simple mean-pooling gating network')
+        parser.add_argument('--mean-pool-gating-network-dropout', type=float,
+                            help='dropout for mean-pooling gating network')
+        parser.add_argument('--mean-pool-gating-network-encoder-dim', type=float,
+                            help='encoder output dim for mean-pooling gating network')
+        parser.add_argument('--gen-expert', type=int, default=0,
+                            help='which expert to use for generation')
+        # fmt: on
 
-    def __init__(self, cfg: TranslationMoEConfig, src_dict, tgt_dict):
-        if cfg.method == "sMoElp":
+    def __init__(self, args, src_dict, tgt_dict):
+        if args.method == "sMoElp":
             # soft MoE with learned prior
             self.uniform_prior = False
             self.hard_selection = False
-        elif cfg.method == "sMoEup":
+        elif args.method == "sMoEup":
             # soft MoE with uniform prior
             self.uniform_prior = True
             self.hard_selection = False
-        elif cfg.method == "hMoElp":
+        elif args.method == "hMoElp":
             # hard MoE with learned prior
             self.uniform_prior = False
             self.hard_selection = True
-        elif cfg.method == "hMoEup":
+        elif args.method == "hMoEup":
             # hard MoE with uniform prior
             self.uniform_prior = True
             self.hard_selection = True
 
         # add indicator tokens for each expert
-        for i in range(cfg.num_experts):
+        for i in range(args.num_experts):
             # add to both dictionaries in case we're sharing embeddings
             src_dict.add_symbol("<expert_{}>".format(i))
             tgt_dict.add_symbol("<expert_{}>".format(i))
 
-        super().__init__(cfg, src_dict, tgt_dict)
+        super().__init__(args, src_dict, tgt_dict)
 
-    def build_model(self, cfg, from_checkpoint=False):
+    def build_model(self, args):
         from fairseq import models
 
-        model = models.build_model(cfg, self)
+        model = models.build_model(args, self)
         if not self.uniform_prior and not hasattr(model, "gating_network"):
-            if self.cfg.mean_pool_gating_network:
-                if self.cfg.mean_pool_gating_network_encoder_dim > 0:
-                    encoder_dim = self.cfg.mean_pool_gating_network_encoder_dim
-                elif getattr(cfg, "encoder_embed_dim", None):
+            if self.args.mean_pool_gating_network:
+                if getattr(args, "mean_pool_gating_network_encoder_dim", None):
+                    encoder_dim = args.mean_pool_gating_network_encoder_dim
+                elif getattr(args, "encoder_embed_dim", None):
                     # assume that encoder_embed_dim is the encoder's output dimension
-                    encoder_dim = cfg.encoder_embed_dim
+                    encoder_dim = args.encoder_embed_dim
                 else:
                     raise ValueError(
                         "Must specify --mean-pool-gating-network-encoder-dim"
                     )
 
-                if self.cfg.mean_pool_gating_network_dropout > 0:
-                    dropout = self.cfg.mean_pool_gating_network_dropout
-                elif getattr(cfg, "dropout", None):
-                    dropout = cfg.dropout
+                if getattr(args, "mean_pool_gating_network_dropout", None):
+                    dropout = args.mean_pool_gating_network_dropout
+                elif getattr(args, "dropout", None):
+                    dropout = args.dropout
                 else:
-                    raise ValueError("Must specify task.mean_pool_gating_network_dropout")
+                    raise ValueError("Must specify --mean-pool-gating-network-dropout")
 
                 model.gating_network = MeanPoolGatingNetwork(
                     encoder_dim,
-                    self.cfg.num_experts,
+                    args.num_experts,
                     dropout,
                 )
             else:
@@ -144,7 +125,7 @@ class TranslationMoETask(TranslationTask):
             criterion, "compute_loss"
         ), "translation_moe task requires the criterion to implement the compute_loss() method"
 
-        k = self.cfg.num_experts
+        k = self.args.num_experts
         bsz = sample["target"].size(0)
 
         def get_lprob_y(encoder_out, prev_output_tokens_k):
@@ -204,7 +185,7 @@ class TranslationMoETask(TranslationTask):
 
         loss = loss.sum()
         sample_size = (
-            sample["target"].size(0) if self.cfg.sentence_avg else sample["ntokens"]
+            sample["target"].size(0) if self.args.sentence_avg else sample["ntokens"]
         )
         logging_output = {
             "loss": utils.item(loss.data),
@@ -240,7 +221,7 @@ class TranslationMoETask(TranslationTask):
         expert=None,
         constraints=None,
     ):
-        expert = expert or self.cfg.gen_expert
+        expert = expert or self.args.gen_expert
         with torch.no_grad():
             return generator.generate(
                 models,

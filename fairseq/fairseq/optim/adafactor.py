@@ -76,7 +76,7 @@ class Adafactor(torch.optim.Optimizer):
     schedule you should set `scale_parameter=False` and
     `relative_step=False`.
 
-    Args:
+    Arguments:
         params (iterable): iterable of parameters to optimize or dicts defining
             parameter groups
         lr (float, optional): external learning rate (default: None)
@@ -168,7 +168,7 @@ class Adafactor(torch.optim.Optimizer):
     def step(self, closure=None):
         """Performs a single optimization step.
 
-        Args:
+        Arguments:
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
         """
@@ -224,7 +224,7 @@ class Adafactor(torch.optim.Optimizer):
                 group["lr"] = self._get_lr(group, state)
 
                 beta2t = 1.0 - math.pow(state["step"], group["decay_rate"])
-                update = (grad**2) + group["eps"][0]
+                update = (grad ** 2) + group["eps"][0]
                 if factored:
                     exp_avg_sq_row = state["exp_avg_sq_row"]
                     exp_avg_sq_col = state["exp_avg_sq_col"]

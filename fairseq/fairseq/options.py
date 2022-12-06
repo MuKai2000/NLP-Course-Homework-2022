@@ -4,23 +4,19 @@
 # LICENSE file in the root directory of this source tree.
 
 import argparse
-from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional
 
 import torch
 from fairseq import utils
 from fairseq.data.indexed_dataset import get_available_dataset_impl
-from fairseq.dataclass.configs import (
-    CheckpointConfig,
-    CommonConfig,
-    CommonEvalConfig,
-    DatasetConfig,
-    DistributedTrainingConfig,
-    EvalLMConfig,
-    GenerationConfig,
-    InteractiveConfig,
-    OptimizationConfig,
-    EMAConfig,
+from fairseq.dataclass.data_class import (
+    CheckpointParams,
+    CommonEvalParams,
+    CommonParams,
+    DatasetParams,
+    DistributedTrainingParams,
+    EvalLMParams,
+    OptimizationParams,
 )
 from fairseq.dataclass.utils import gen_parser_from_dataclass
 
@@ -41,7 +37,6 @@ def get_training_parser(default_task="translation"):
     add_model_args(parser)
     add_optimization_args(parser)
     add_checkpoint_args(parser)
-    add_ema_args(parser)
     return parser
 
 
@@ -50,17 +45,8 @@ def get_generation_parser(interactive=False, default_task="translation"):
     add_dataset_args(parser, gen=True)
     add_distributed_training_args(parser, default_world_size=1)
     add_generation_args(parser)
-    add_checkpoint_args(parser)
     if interactive:
         add_interactive_args(parser)
-    return parser
-
-
-def get_speech_generation_parser(default_task="text_to_speech"):
-    parser = get_parser("Speech Generation", default_task)
-    add_dataset_args(parser, gen=True)
-    add_distributed_training_args(parser, default_world_size=1)
-    add_speech_generation_args(parser)
     return parser
 
 
@@ -81,7 +67,7 @@ def get_validation_parser(default_task=None):
     add_dataset_args(parser, train=True)
     add_distributed_training_args(parser, default_world_size=1)
     group = parser.add_argument_group("Evaluation")
-    gen_parser_from_dataclass(group, CommonEvalConfig())
+    gen_parser_from_dataclass(group, CommonEvalParams())
     return parser
 
 
@@ -152,16 +138,6 @@ def parse_args_and_arch(
         else:
             raise RuntimeError()
 
-    if hasattr(args, "task"):
-        from fairseq.tasks import TASK_REGISTRY
-
-        TASK_REGISTRY[args.task].add_args(parser)
-    if getattr(args, "use_bmuf", False):
-        # hack to support extra args for block distributed data parallelism
-        from fairseq.optim.bmuf import FairseqBMUF
-
-        FairseqBMUF.add_args(parser)
-
     # Add *-specific args to parser.
     from fairseq.registry import REGISTRIES
 
@@ -171,8 +147,15 @@ def parse_args_and_arch(
             cls = REGISTRY["registry"][choice]
             if hasattr(cls, "add_args"):
                 cls.add_args(parser)
-            elif hasattr(cls, "__dataclass"):
-                gen_parser_from_dataclass(parser, cls.__dataclass())
+    if hasattr(args, "task"):
+        from fairseq.tasks import TASK_REGISTRY
+
+        TASK_REGISTRY[args.task].add_args(parser)
+    if getattr(args, "use_bmuf", False):
+        # hack to support extra args for block distributed data parallelism
+        from fairseq.optim.bmuf import FairseqBMUF
+
+        FairseqBMUF.add_args(parser)
 
     # Modify the parser a second time, since defaults may have been reset
     if modify_parser is not None:
@@ -208,13 +191,6 @@ def parse_args_and_arch(
     else:
         args.no_seed_provided = False
 
-    if getattr(args, "update_epoch_batch_itr", None) is None:
-        if hasattr(args, "grouped_shuffling"):
-            args.update_epoch_batch_itr = args.grouped_shuffling
-        else:
-            args.grouped_shuffling = False
-            args.update_epoch_batch_itr = False
-
     # Apply architecture configuration.
     if hasattr(args, "arch") and args.arch in ARCH_CONFIG_REGISTRY:
         ARCH_CONFIG_REGISTRY[args.arch](args)
@@ -234,7 +210,7 @@ def get_parser(desc, default_task="translation"):
     utils.import_user_module(usr_args)
 
     parser = argparse.ArgumentParser(allow_abbrev=False)
-    gen_parser_from_dataclass(parser, CommonConfig())
+    gen_parser_from_dataclass(parser, CommonParams())
 
     from fairseq.registry import REGISTRIES
 
@@ -267,13 +243,11 @@ def add_preprocess_args(parser):
     group.add_argument("-t", "--target-lang", default=None, metavar="TARGET",
                        help="target language")
     group.add_argument("--trainpref", metavar="FP", default=None,
-                       help="train file prefix (also used to build dictionaries)")
+                       help="train file prefix")
     group.add_argument("--validpref", metavar="FP", default=None,
-                       help="comma separated, valid file prefixes "
-                            "(words missing from train set are replaced with <unk>)")
+                       help="comma separated, valid file prefixes")
     group.add_argument("--testpref", metavar="FP", default=None,
-                       help="comma separated, test file prefixes "
-                            "(words missing from train set are replaced with <unk>)")
+                       help="comma separated, test file prefixes")
     group.add_argument("--align-suffix", metavar="FP", default=None,
                        help="alignment file suffix")
     group.add_argument("--destdir", metavar="DIR", default="data-bin",
@@ -303,15 +277,13 @@ def add_preprocess_args(parser):
                        help="Pad dictionary size to be multiple of N")
     group.add_argument("--workers", metavar="N", default=1, type=int,
                        help="number of parallel workers")
-    group.add_argument("--dict-only", action='store_true',
-                       help="if true, only builds a dictionary and then exits")
     # fmt: on
     return parser
 
 
 def add_dataset_args(parser, train=False, gen=False):
     group = parser.add_argument_group("dataset_data_loading")
-    gen_parser_from_dataclass(group, DatasetConfig())
+    gen_parser_from_dataclass(group, DatasetParams())
     # fmt: on
     return group
 
@@ -321,7 +293,7 @@ def add_distributed_training_args(parser, default_world_size=None):
     if default_world_size is None:
         default_world_size = max(1, torch.cuda.device_count())
     gen_parser_from_dataclass(
-        group, DistributedTrainingConfig(distributed_world_size=default_world_size)
+        group, DistributedTrainingParams(distributed_world_size=default_world_size)
     )
     return group
 
@@ -329,7 +301,7 @@ def add_distributed_training_args(parser, default_world_size=None):
 def add_optimization_args(parser):
     group = parser.add_argument_group("optimization")
     # fmt: off
-    gen_parser_from_dataclass(group, OptimizationConfig())
+    gen_parser_from_dataclass(group, OptimizationParams())
     # fmt: on
     return group
 
@@ -337,41 +309,117 @@ def add_optimization_args(parser):
 def add_checkpoint_args(parser):
     group = parser.add_argument_group("checkpoint")
     # fmt: off
-    gen_parser_from_dataclass(group, CheckpointConfig())
+    gen_parser_from_dataclass(group, CheckpointParams())
     # fmt: on
     return group
 
 
 def add_common_eval_args(group):
-    gen_parser_from_dataclass(group, CommonEvalConfig())
+    gen_parser_from_dataclass(group, CommonEvalParams())
 
 
 def add_eval_lm_args(parser):
     group = parser.add_argument_group("LM Evaluation")
     add_common_eval_args(group)
-    gen_parser_from_dataclass(group, EvalLMConfig())
+    gen_parser_from_dataclass(group, EvalLMParams())
 
 
 def add_generation_args(parser):
     group = parser.add_argument_group("Generation")
     add_common_eval_args(group)
-    gen_parser_from_dataclass(group, GenerationConfig())
-    return group
-
-
-def add_speech_generation_args(parser):
-    group = parser.add_argument_group("Speech Generation")
-    add_common_eval_args(group)  # NOTE: remove_bpe is not needed
     # fmt: off
-    group.add_argument('--eos_prob_threshold', default=0.5, type=float,
-                       help='terminate when eos probability exceeds this')
+    group.add_argument('--beam', default=5, type=int, metavar='N',
+                       help='beam size')
+    group.add_argument('--nbest', default=1, type=int, metavar='N',
+                       help='number of hypotheses to output')
+    group.add_argument('--max-len-a', default=0, type=float, metavar='N',
+                       help=('generate sequences of maximum length ax + b, '
+                             'where x is the source length'))
+    group.add_argument('--max-len-b', default=200, type=int, metavar='N',
+                       help=('generate sequences of maximum length ax + b, '
+                             'where x is the source length'))
+    group.add_argument('--min-len', default=1, type=float, metavar='N',
+                       help=('minimum generation length'))
+    group.add_argument('--match-source-len', default=False, action='store_true',
+                       help=('generations should match the source length'))
+    group.add_argument('--no-early-stop', action='store_true',
+                       help='deprecated')
+    group.add_argument('--unnormalized', action='store_true',
+                       help='compare unnormalized hypothesis scores')
+    group.add_argument('--no-beamable-mm', action='store_true',
+                       help='don\'t use BeamableMM in attention layers')
+    group.add_argument('--lenpen', default=1, type=float,
+                       help='length penalty: <1.0 favors shorter, >1.0 favors longer sentences')
+    group.add_argument('--unkpen', default=0, type=float,
+                       help='unknown word penalty: <0 produces more unks, >0 produces fewer')
+    group.add_argument('--replace-unk', nargs='?', const=True, default=None,
+                       help='perform unknown replacement (optionally with alignment dictionary)')
+    group.add_argument('--sacrebleu', action='store_true',
+                       help='score with sacrebleu')
+    group.add_argument('--score-reference', action='store_true',
+                       help='just score the reference translation')
+    group.add_argument('--prefix-size', default=0, type=int, metavar='PS',
+                       help='initialize generation by target prefix of given length')
+    group.add_argument('--no-repeat-ngram-size', default=0, type=int, metavar='N',
+                       help='ngram blocking such that this size ngram cannot be repeated in the generation')
+    group.add_argument('--sampling', action='store_true',
+                       help='sample hypotheses instead of using beam search')
+    group.add_argument('--sampling-topk', default=-1, type=int, metavar='PS',
+                       help='sample from top K likely next words instead of all words')
+    group.add_argument('--sampling-topp', default=-1.0, type=float, metavar='PS',
+                       help='sample from the smallest set whose cumulative probability mass exceeds p for next words')
+    group.add_argument('--constraints', const="ordered", nargs="?", choices=["ordered", "unordered"],
+                       help='enables lexically constrained decoding')
+    group.add_argument('--temperature', default=1., type=float, metavar='N',
+                       help='temperature for generation')
+    group.add_argument('--diverse-beam-groups', default=-1, type=int, metavar='N',
+                       help='number of groups for Diverse Beam Search')
+    group.add_argument('--diverse-beam-strength', default=0.5, type=float, metavar='N',
+                       help='strength of diversity penalty for Diverse Beam Search')
+    group.add_argument('--diversity-rate', default=-1.0, type=float, metavar='N',
+                       help='strength of diversity penalty for Diverse Siblings Search')
+    group.add_argument('--print-alignment', action='store_true',
+                       help='if set, uses attention feedback to compute and print alignment to source tokens')
+    group.add_argument('--print-step', action='store_true')
+
+    group.add_argument('--lm-path', default=None, type=str, metavar='PATH',
+                       help='path to lm checkpoint for lm fusion')
+    group.add_argument('--lm-weight', default=0.0, type=float, metavar='N',
+                       help='weight for lm probs for lm fusion')
+
+    # arguments for iterative refinement generator
+    group.add_argument('--iter-decode-eos-penalty', default=0.0, type=float, metavar='N',
+                       help='if > 0.0, it penalized early-stopping in decoding.')
+    group.add_argument('--iter-decode-max-iter', default=10, type=int, metavar='N',
+                       help='maximum iterations for iterative refinement.')
+    group.add_argument('--iter-decode-force-max-iter', action='store_true',
+                       help='if set, run exact the maximum number of iterations without early stop')
+    group.add_argument('--iter-decode-with-beam', default=1, type=int, metavar='N',
+                       help='if > 1, model will generate translations varying by the lengths.')
+    group.add_argument('--iter-decode-with-external-reranker', action='store_true',
+                       help='if set, the last checkpoint are assumed to be a reranker to rescore the translations'),
+    group.add_argument('--retain-iter-history', action='store_true',
+                       help='if set, decoding returns the whole history of iterative refinement')
+    group.add_argument('--retain-dropout', action='store_true',
+                       help='Use dropout at inference time')
+    group.add_argument('--retain-dropout-modules', default=None, nargs='+', type=str,
+                       help='if set, only retain dropout for the specified modules; '
+                            'if not set, then dropout will be retained for all modules')
+
+    # special decoding format for advanced decoding.
+    group.add_argument('--decoding-format', default=None, type=str, choices=['unigram', 'ensemble', 'vote', 'dp', 'bs'])
     # fmt: on
     return group
 
 
 def add_interactive_args(parser):
     group = parser.add_argument_group("Interactive")
-    gen_parser_from_dataclass(group, InteractiveConfig())
+    # fmt: off
+    group.add_argument('--buffer-size', default=0, type=int, metavar='N',
+                       help='read this many sentences into a buffer before processing them')
+    group.add_argument('--input', default='-', type=str, metavar='FILE',
+                       help='file to read from; use - for stdin')
+    # fmt: on
 
 
 def add_model_args(parser):
@@ -391,23 +439,3 @@ def add_model_args(parser):
                        help='model architecture')
     # fmt: on
     return group
-
-
-def get_args(
-    data: Union[str, Path],
-    task: str = "translation",
-    arch: str = "transformer",
-    **overrides
-):
-    parser = get_training_parser(task)
-    args = parse_args_and_arch(parser, [str(data), "--task", task, "--arch", arch])
-
-    for k, v in overrides.items():
-        setattr(args, k, v)
-
-    return args
-
-
-def add_ema_args(parser):
-    group = parser.add_argument_group("EMA configuration")
-    gen_parser_from_dataclass(group, EMAConfig())

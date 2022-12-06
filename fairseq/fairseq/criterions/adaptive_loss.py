@@ -16,8 +16,8 @@ from omegaconf import II
 
 @dataclass
 class AdaptiveLossConfig(FairseqDataclass):
-    sentence_avg: bool = II("optimization.sentence_avg")
-    ddp_backend: DDP_BACKEND_CHOICES = II("distributed_training.ddp_backend")
+    sentence_avg: bool = II("params.optimization.sentence_avg")
+    ddp_backend: DDP_BACKEND_CHOICES = II("params.distributed_training.ddp_backend")
 
 
 @register_criterion("adaptive_loss", dataclass=AdaptiveLossConfig)
@@ -31,14 +31,14 @@ class AdaptiveLoss(FairseqCriterion):
         self.sentence_avg = sentence_avg
 
     @classmethod
-    def build_criterion(cls, cfg: AdaptiveLossConfig, task):
-        if cfg.ddp_backend in {"c10d", "pytorch_ddp"}:
+    def build_criterion(cls, args, task):
+        if getattr(args, "ddp_backend", None) == "c10d":
             raise Exception(
-                "AdaptiveLoss is not compatible with the PyTorch "
+                "AdaptiveLoss is not compatible with the c10d "
                 "version of DistributedDataParallel. Please use "
-                "`--ddp-backend=legacy_ddp` instead."
+                "`--ddp-backend=no_c10d` instead."
             )
-        return cls(task, cfg.sentence_avg)
+        return cls(task, args.sentence_avg)
 
     def forward(self, model, sample, reduce=True):
         """Compute the loss for the given sample.

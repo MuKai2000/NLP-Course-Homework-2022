@@ -160,7 +160,7 @@ def collate(
         constraints = torch.zeros((len(samples), max(lens))).long()
         for i, sample in enumerate(samples):
             constraints[i, 0 : lens[i]] = samples[i].get("constraints")
-        batch["constraints"] = constraints.index_select(0, sort_order)
+        batch["constraints"] = constraints
 
     return batch
 
@@ -289,7 +289,7 @@ class LanguagePairDataset(FairseqDataset):
 
             # determine bucket sizes using self.num_tokens, which will return
             # the padded lengths (thanks to BucketPadLengthDataset)
-            num_tokens = np.vectorize(self.num_tokens, otypes=[np.compat.long])
+            num_tokens = np.vectorize(self.num_tokens, otypes=[np.long])
             self.bucketed_num_tokens = num_tokens(np.arange(len(self.src)))
             self.buckets = [
                 (None, num_tokens) for num_tokens in np.unique(self.bucketed_num_tokens)
@@ -407,14 +407,6 @@ class LanguagePairDataset(FairseqDataset):
             self.src_sizes[index],
             self.tgt_sizes[index] if self.tgt_sizes is not None else 0,
         )
-
-    def num_tokens_vec(self, indices):
-        """Return the number of tokens for a set of positions defined by indices.
-        This value is used to enforce ``--max-tokens`` during batching."""
-        sizes = self.src_sizes[indices]
-        if self.tgt_sizes is not None:
-            sizes = np.maximum(sizes, self.tgt_sizes[indices])
-        return sizes
 
     def size(self, index):
         """Return an example's size as a float or tuple. This value is used when

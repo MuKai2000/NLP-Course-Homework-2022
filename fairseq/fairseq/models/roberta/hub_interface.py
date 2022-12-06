@@ -14,16 +14,16 @@ from fairseq.data import encoders
 class RobertaHubInterface(nn.Module):
     """A simple PyTorch Hub interface to RoBERTa.
 
-    Usage: https://github.com/pytorch/fairseq/tree/main/examples/roberta
+    Usage: https://github.com/pytorch/fairseq/tree/master/examples/roberta
     """
 
-    def __init__(self, cfg, task, model):
+    def __init__(self, args, task, model):
         super().__init__()
-        self.cfg = cfg
+        self.args = args
         self.task = task
         self.model = model
 
-        self.bpe = encoders.build_bpe(cfg.bpe)
+        self.bpe = encoders.build_bpe(args)
 
         # this is useful for determining the device
         self.register_buffer("_float_tensor", torch.tensor([0], dtype=torch.float))
@@ -173,7 +173,7 @@ class RobertaHubInterface(nn.Module):
             add_if_not_exist=False,
         )
 
-        masked_index = (tokens == self.task.mask_idx).nonzero(as_tuple=False)
+        masked_index = (tokens == self.task.mask_idx).nonzero()
         if tokens.dim() == 1:
             tokens = tokens.unsqueeze(0)
 

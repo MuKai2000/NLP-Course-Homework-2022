@@ -208,11 +208,11 @@ following contents::
   import torch
 
   from fairseq.data import Dictionary, LanguagePairDataset
-  from fairseq.tasks import LegacyFairseqTask, register_task
+  from fairseq.tasks import FairseqTask, register_task
 
 
   @register_task('simple_classification')
-  class SimpleClassificationTask(LegacyFairseqTask):
+  class SimpleClassificationTask(FairseqTask):
 
       @staticmethod
       def add_args(parser):

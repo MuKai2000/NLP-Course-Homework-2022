@@ -10,7 +10,6 @@ from fairseq.models.transformer import (
     TransformerEncoder,
     base_architecture,
 )
-from fairseq.utils import safe_hasattr
 
 from .latent_transformer import LatentTransformerDecoder, LatentTransformerEncoder
 
@@ -22,33 +21,17 @@ class LatentMultilingualTransformerModel(MultilingualTransformerModel):
     (https://arxiv.org/abs/2009.13102).
     """
 
-    @staticmethod
-    def add_args(parser):
-        """Add model-specific arguments to the parser."""
-        MultilingualTransformerModel.add_args(parser)
-        parser.add_argument(
-            '--soft-select',
-            action='store_true',
-            help='use soft samples in training an inference',
-        )
-        parser.add_argument(
-            '--sampling-tau',
-            type=float,
-            default=5.,
-            help='sampling temperature',
-        )
-
     @classmethod
     def _get_module_class(cls, is_encoder, args, lang_dict, embed_tokens, langs):
         if is_encoder:
-            if safe_hasattr(args, "encoder_latent_layer") and args.encoder_latent_layer:
+            if hasattr(args, "encoder_latent_layer") and args.encoder_latent_layer:
                 return LatentTransformerEncoder(
                     args, lang_dict, embed_tokens, num_logits=len(langs)
                 )
             else:
                 return TransformerEncoder(args, lang_dict, embed_tokens)
         else:
-            if safe_hasattr(args, "decoder_latent_layer") and args.decoder_latent_layer:
+            if hasattr(args, "decoder_latent_layer") and args.decoder_latent_layer:
                 return LatentTransformerDecoder(
                     args, lang_dict, embed_tokens, num_logits=len(langs)
                 )

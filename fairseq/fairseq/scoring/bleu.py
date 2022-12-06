@@ -6,10 +6,8 @@
 import ctypes
 import math
 import sys
-from dataclasses import dataclass, field
 
 import torch
-from fairseq.dataclass import FairseqDataclass
 from fairseq.scoring import BaseScorer, register_scorer
 from fairseq.scoring.tokenizer import EvaluationTokenizer
 
@@ -29,63 +27,54 @@ class BleuStat(ctypes.Structure):
     ]
 
 
-@dataclass
-class SacrebleuConfig(FairseqDataclass):
-    sacrebleu_tokenizer: EvaluationTokenizer.ALL_TOKENIZER_TYPES = field(
-        default="13a", metadata={"help": "tokenizer"}
-    )
-    sacrebleu_lowercase: bool = field(
-        default=False, metadata={"help": "apply lowercasing"}
-    )
-    sacrebleu_char_level: bool = field(
-        default=False, metadata={"help": "evaluate at character level"}
-    )
-
-
-@register_scorer("sacrebleu", dataclass=SacrebleuConfig)
+@register_scorer("sacrebleu")
 class SacrebleuScorer(BaseScorer):
-    def __init__(self, cfg):
-        super(SacrebleuScorer, self).__init__(cfg)
+    def __init__(self, args):
+        super(SacrebleuScorer, self).__init__(args)
         import sacrebleu
 
         self.sacrebleu = sacrebleu
         self.tokenizer = EvaluationTokenizer(
-            tokenizer_type=cfg.sacrebleu_tokenizer,
-            lowercase=cfg.sacrebleu_lowercase,
-            character_tokenization=cfg.sacrebleu_char_level,
+            tokenizer_type=self.args.sacrebleu_tokenizer,
+            lowercase=self.args.sacrebleu_lowercase,
+            character_tokenization=self.args.sacrebleu_char_level,
         )
+
+    @staticmethod
+    def add_args(parser):
+        # fmt: off
+        parser.add_argument('--sacrebleu-tokenizer', type=str, default='13a',
+                            choices=EvaluationTokenizer.ALL_TOKENIZER_TYPES,
+                            help='tokenizer')
+        parser.add_argument('--sacrebleu-lowercase', type=str, default=False,
+                            help='apply lowercasing')
+        parser.add_argument('--sacrebleu-char-level', action='store_true',
+                            help='evaluate at character level')
+        # fmt: on
 
     def add_string(self, ref, pred):
         self.ref.append(self.tokenizer.tokenize(ref))
         self.pred.append(self.tokenizer.tokenize(pred))
 
-    def _score(self, order=4):
+    def score(self, order=4):
+        return self.result_string(order).score
+
+    def result_string(self, order=4):
         if order != 4:
             raise NotImplementedError
         # tokenization and lowercasing are performed by self.tokenizer instead.
-        return self.sacrebleu.corpus_bleu(self.pred, [self.ref], tokenize="none")
-
-    def score(self, order=4):
-        return self._score(order).score
-
-    def result_string(self, order=4):
-        return self._score(order).format()
+        return self.sacrebleu.corpus_bleu(
+            self.pred, [self.ref], tokenize="none"
+        ).format()
 
 
-@dataclass
-class BleuConfig(FairseqDataclass):
-    pad: int = field(default=1, metadata={"help": "padding index"})
-    eos: int = field(default=2, metadata={"help": "eos index"})
-    unk: int = field(default=3, metadata={"help": "unk index"})
-
-
-@register_scorer("bleu", dataclass=BleuConfig)
+@register_scorer("bleu")
 class Scorer(object):
-    def __init__(self, cfg):
+    def __init__(self, pad, eos, unk):
         self.stat = BleuStat()
-        self.pad = cfg.pad
-        self.eos = cfg.eos
-        self.unk = cfg.unk
+        self.pad = pad
+        self.eos = eos
+        self.unk = unk
 
         try:
             from fairseq import libbleu
