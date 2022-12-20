@@ -4,7 +4,9 @@
 root=~/NLP-Course-Homework-2022
 pwd=$(pwd)
 
-dataset=niutrans-smt-sample
+# dataset=niutrans-smt-sample
+dataset=UNv2009
+
 dataset_dir=$root/nmt/en-zh/$dataset
 data_dir=$dataset_dir/data
 model_dir=$dataset_dir/model
@@ -14,7 +16,8 @@ config_dir=$root/nmt/en-zh/config
 src=en
 tgt=zh
 
-tag=baseline_nlplab
+tag=baseline_un
+
 if [ ! -d "${model_dir}/${tag}" ]; then
     mkdir "${model_dir}/${tag}"
 fi
