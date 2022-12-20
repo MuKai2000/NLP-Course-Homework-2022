@@ -4,7 +4,8 @@
 root=~/NLP-Course-Homework-2022
 pwd=$(pwd)
 
-dataset_dir=$root/nmt/en-zh/niutrans-smt-sample
+dataset=niutrans-smt-sample
+dataset_dir=$root/nmt/en-zh/$dataset
 data_dir=$dataset_dir/data
 model_dir=$dataset_dir/model
 config_dir=$root/nmt/en-zh/config
@@ -39,6 +40,6 @@ CUDA_VISIBLE_DEVICES=0 nohup fairseq-train ${data_dir}/data-bin \
     --max-tokens 4096 --num-workers 8 \
     --no-progress-bar --log-interval 100 --seed 1 --report-accuracy\
     --skip-invalid-size-inputs-valid-test \
-    --keep-last-epochs 3 \
+    --keep-last-epochs 5 \
 	--save-dir ${model_dir}/${tag}/checkpoints \
     --tensorboard-logdir ${model_dir}/${tag}/tensorboard &
