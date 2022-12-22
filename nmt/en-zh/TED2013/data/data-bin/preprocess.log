@@ -1,0 +1,14 @@
+Namespace(align_suffix=None, alignfile=None, all_gather_list_size=16384, bf16=False, bpe=None, checkpoint_shard_count=1, checkpoint_suffix='', cpu=False, criterion='cross_entropy', dataset_impl='mmap', destdir='/home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/data-bin', empty_cache_freq=0, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, joined_dictionary=False, log_format=None, log_interval=100, lr_scheduler='fixed', memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, model_parallel_size=1, no_progress_bar=False, nwordssrc=-1, nwordstgt=-1, only_source=False, optimizer=None, padding_factor=8, profile=False, quantization_config_path=None, scoring='bleu', seed=1, source_lang='en', srcdict=None, target_lang='zh', task='translation', tensorboard_logdir=None, testpref='/home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/test', tgtdict=None, threshold_loss_scale=None, thresholdsrc=0, thresholdtgt=0, tokenizer=None, tpu=False, trainpref='/home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/train', user_dir=None, validpref='/home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/valid', workers=1)
+[en] Dictionary: 30000 types
+[en] /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/train.en: 142167 sents, 3077362 tokens, 0.0% replaced by <unk>
+[en] Dictionary: 30000 types
+[en] /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/valid.en: 3697 sents, 81055 tokens, 0.0506% replaced by <unk>
+[en] Dictionary: 30000 types
+[en] /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/test.en: 3744 sents, 80699 tokens, 0.0384% replaced by <unk>
+[zh] Dictionary: 36784 types
+[zh] /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/train.zh: 142167 sents, 2777792 tokens, 0.0% replaced by <unk>
+[zh] Dictionary: 36784 types
+[zh] /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/valid.zh: 3697 sents, 72630 tokens, 0.0881% replaced by <unk>
+[zh] Dictionary: 36784 types
+[zh] /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/test.zh: 3744 sents, 73026 tokens, 0.0917% replaced by <unk>
+Wrote preprocessed data to /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/TED2013/data/data-bin

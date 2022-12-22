@@ -3,7 +3,8 @@
 # arg
 reload=0
 # dataset=niutrans-smt-sample
-dataset=UNv2009
+# dataset=UNv2009
+dataset=TED2013
 # Path
 root=~/NLP-Course-Homework-2022
 pwd=$(pwd)
