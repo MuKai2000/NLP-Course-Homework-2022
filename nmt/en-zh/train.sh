@@ -16,7 +16,7 @@ config_dir=$root/nmt/en-zh/config
 src=en
 tgt=zh
 
-tag=baseline_un
+tag=baseline_un_layer6_256_4_1024
 
 if [ ! -d "${model_dir}/${tag}" ]; then
     mkdir "${model_dir}/${tag}"
@@ -35,12 +35,12 @@ CUDA_VISIBLE_DEVICES=0 nohup fairseq-train ${data_dir}/data-bin \
     --dropout 0.3 --attention-dropout 0.1 --activation-dropout 0.1 \
     --activation-fn relu \
     --encoder-layers 6 \
-    --encoder-embed-dim 128 --encoder-attention-heads 8 --encoder-ffn-embed-dim 2048 \
+    --encoder-embed-dim 256 --encoder-attention-heads 4 --encoder-ffn-embed-dim 1024 \
     --decoder-layers 6 \
-    --decoder-embed-dim 512 --decoder-attention-heads 8 --decoder-ffn-embed-dim 2048 \
+    --decoder-embed-dim 256 --decoder-attention-heads 4 --decoder-ffn-embed-dim 2048 \
     --share-decoder-input-output-embed \
-    --max-epoch 20 --max-update 200000 \
-    --max-tokens 4096 --num-workers 8 \
+    --max-epoch 25 --max-update 200000 \
+    --max-tokens 2048 --num-workers 8 --update-freq 2 \
     --no-progress-bar --log-interval 100 --seed 1 --report-accuracy\
     --skip-invalid-size-inputs-valid-test \
     --keep-last-epochs 5 \

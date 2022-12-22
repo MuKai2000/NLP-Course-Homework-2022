@@ -26,6 +26,8 @@ from fairseq.modules import (
     SinusoidalPositionalEmbedding,
     TransformerDecoderLayer,
     TransformerEncoderLayer,
+    ArnTransformerDecoderLayer,
+    ArnTransformerEncoderLayer,
 )
 from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from torch import Tensor
@@ -95,6 +97,10 @@ class TransformerModel(FairseqEncoderDecoderModel):
     def add_args(parser):
         """Add model-specific arguments to the parser."""
         # fmt: off
+        parser.add_argument('--arn', default=False,
+                            help='if model use attention refinement network')
+        parser.add_argument('--arn-num', default=1,
+                            help='the number of arn blocks')
         parser.add_argument('--activation-fn',
                             choices=utils.get_available_activation_fns(),
                             help='activation function to use')
@@ -180,6 +186,11 @@ class TransformerModel(FairseqEncoderDecoderModel):
 
         # make sure all arguments are present in older models
         base_architecture(args)
+
+        print("************************************")
+        print("\tUsing ARN Model: ", args.arn)
+        print("\tNum of ARN Block: ", args.arn_num)
+        print("************************************")
 
         if args.encoder_layers_to_keep:
             args.encoder_layers = len(args.encoder_layers_to_keep.split(","))
@@ -362,7 +373,10 @@ class TransformerEncoder(FairseqEncoder):
             self.layer_norm = None
 
     def build_encoder_layer(self, args):
-        return TransformerEncoderLayer(args)
+        if args.arn is False:
+            return TransformerEncoderLayer(args)
+        else:
+            return ArnTransformerEncoderLayer(args)
 
     def forward_embedding(
         self, src_tokens, token_embedding: Optional[torch.Tensor] = None
@@ -421,11 +435,15 @@ class TransformerEncoder(FairseqEncoder):
         encoder_states = [] if return_all_hiddens else None
 
         # encoder layers
-        for layer in self.layers:
-            x = layer(x, encoder_padding_mask)
-            if return_all_hiddens:
-                assert encoder_states is not None
-                encoder_states.append(x)
+        if args.arn is False:
+            for layer in self.layers:
+                x = layer(x, encoder_padding_mask)
+                if return_all_hiddens:
+                    assert encoder_states is not None
+                    encoder_states.append(x)
+        else:
+
+            pass
 
         if self.layer_norm is not None:
             x = self.layer_norm(x)
@@ -650,7 +668,10 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             )
 
     def build_decoder_layer(self, args, no_encoder_attn=False):
-        return TransformerDecoderLayer(args, no_encoder_attn)
+        if args.arn is False:
+            return TransformerDecoderLayer(args, no_encoder_attn)
+        else:
+            return ArnTransformerDecoderLayer(args, no_encoder_attn)
 
     def forward(
         self,
@@ -962,6 +983,13 @@ def base_architecture(args):
     args.no_scale_embedding = getattr(args, "no_scale_embedding", False)
     args.layernorm_embedding = getattr(args, "layernorm_embedding", False)
     args.tie_adaptive_weights = getattr(args, "tie_adaptive_weights", False)
+
+
+@register_model_architecture("transformer", "transformer_arn")
+def transformer_arn(args):
+    args.arn = getattr(args, "arn", True)
+    args.arn_num = getattr(args, "arn-num", 2)
+    base_architecture(args)
 
 
 @register_model_architecture("transformer", "transformer_iwslt_de_en")
