@@ -103,7 +103,7 @@ class FeedForwardNetwork(nn.Module):
 class AddNorm(nn.Module):
     """残差连接&层归一化"""
 
-    def __init__(self, dropout):
+    def __init__(self, dropout=0.1):
         super(AddNorm, self).__init__()
         self.dropout = nn.Dropout(dropout)
     
@@ -137,9 +137,9 @@ class DecoderBlock(nn.Module):
         super(DecoderBlock, self).__init__()
         self.i = i  # 当前块序号
         self.attention1 = MultiheadAttention(d_model=d_model, n_heads=n_heads, dropout=attention_dropout)   # 注意力层
-        self.addnorm1 = AddNorm(dropout, dropout=addnorm_dropout)   # 残差连接与归一化
+        self.addnorm1 = AddNorm(dropout=addnorm_dropout)   # 残差连接与归一化
         self.attention2 = MultiheadAttention(d_model=d_model, n_heads=n_heads, dropout=attention_dropout)   # 注意力层
-        self.addnorm2 = AddNorm(dropout, dropout=addnorm_dropout)   # 残差连接与归一化
+        self.addnorm2 = AddNorm(dropout=addnorm_dropout)   # 残差连接与归一化
         self.ffn = FeedForwardNetwork(input_dim=d_model, hidden_dim=hidden_dim, dropout=ffn_dropout)    # 前馈层
         self.addnorm3 = AddNorm(dropout=addnorm_dropout)    # 残差连接与归一化
 
@@ -161,9 +161,9 @@ class Encoder(nn.Module):
         self.d_model = d_model
         self.embedding = nn.Embedding(vocab_size, self.d_model) # Embedding层
         self.pos_encoding = PositionalEncoding(d_model=self.d_model, dropout=dropout[0], max_tokens=max_tokens)    # 位置编码
-        self.layers = nn.Sequencial()   
+        self.layers = nn.Sequential()   
         for _ in range(num_layers):
-            self.layers.add(EncoderBlock(d_model=self.d_model, n_heads=n_heads, hidden_dim=hidden_dim, attention_dropout=dropout[1], ffn_dropout=dropout[2], addnorm_dropout=dropout[3])) # Encoder块
+            self.layers.append(EncoderBlock(d_model=self.d_model, n_heads=n_heads, hidden_dim=hidden_dim, attention_dropout=dropout[1], ffn_dropout=dropout[2], addnorm_dropout=dropout[3])) # Encoder块
     
     def forward(self, x, mask):
         x = self.pos_encoding(self.embedding(x) * math.sqrt(self.d_model))  # 通过Embedding与位置编码
@@ -181,9 +181,9 @@ class Decoder(nn.Module):
         self.num_layers = num_layers
         self.embedding = nn.Embedding(vocab_size, self.d_model) # Embedding层
         self.pos_encoding = PositionalEncoding(d_model=self.d_model, dropout=dropout[0], max_tokens=max_tokens)    # 位置编码
-        self.layers = nn.Sequencial()
-        for _ in range(self.num_layers):
-            self.layers.add(DecoderBlock(d_model=self.d_model, n_heads=n_heads, hidden_dim=hidden_dim, attention_dropout=dropout[1], ffn_dropout=dropout[2], addnorm_dropout=dropout[3])) # 解码器层
+        self.layers = nn.Sequential()
+        for i in range(self.num_layers):
+            self.layers.append(DecoderBlock(i=i, d_model=self.d_model, n_heads=n_heads, hidden_dim=hidden_dim, attention_dropout=dropout[1], ffn_dropout=dropout[2], addnorm_dropout=dropout[3])) # 解码器层
 
     def forward(self, x, enc_output, src_mask, tgt_mask):
         x = self.pos_encoding(self.embedding(x) * math.sqrt(self.d_model))
@@ -196,7 +196,7 @@ class Generator(nn.Module):
     """生成器：将解码器的输出映射至词表维度"""
 
     def __init__(self, d_model, vocab_size):
-        super(Generatorm ,self).__init__()
+        super(Generator, self).__init__()
         self.net = nn.Linear(d_model, vocab_size)   # 线性变换层
     
     def forward(self, x):
@@ -227,6 +227,10 @@ class Transformer(nn.Module):
                                     decoder=Decoder(d_model=d_model, vocab_size=tgt_vocab, max_tokens=max_tokens, num_layers=num_layers[1], n_heads=n_heads, hidden_dim=hidden_dim, dropout=dropout), 
                                     generator=Generator(d_model=d_model, vocab_size=tgt_vocab))
         # 初始化参数
-        for p in model.parameters():
+        for p in self.model.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform(p)
+
+transformer = Transformer(20, 20, 10)
+model = transformer.model
+print(model)
