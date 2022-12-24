@@ -4,7 +4,8 @@
 reload=0
 # dataset=niutrans-smt-sample
 # dataset=UNv2009
-dataset=TED2013
+# dataset=TED2013
+dataset=News-Commentary-small
 # Path
 root=~/NLP-Course-Homework-2022
 pwd=$(pwd)
