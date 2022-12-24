@@ -4,18 +4,12 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-
-def get_mask(size):
-    "生成Mask"
-    attn_shape = (1, size, size)
-    mask = np.triu(np.ones(attn_shape), k=1).astype('uint8')    # 下三角矩阵
-    return torch.from_numpy(mask) == 0
-
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class PositionalEncoding(nn.Module):
     """位置编码"""
 
-    def __init__(self, d_model, dropout=0.1, max_tokens=5000):
+    def __init__(self, d_model, dropout=0.1, max_tokens=1000):
         super(PositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(dropout)  # dropout
 
@@ -37,13 +31,19 @@ class DotProductAttention(nn.Module):
         super(DotProductAttention, self).__init__()
         self.dropout = nn.Dropout(dropout)
   
-    def forward(query, key, value, mask=None):
+    def forward(self, query, key, value, mask=None):
+        # print("query: ", query.shape)
+        # print("key: ", key.shape)
         dim = query.size(-1)
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(dim)
+        # print("scores: ", scores.shape)
         if mask is not None:
+            # print("mask: ", mask.shape, mask)
             scores = scores.masked_fill(mask==0, -1e9)
+        # print("scores: ", scores.shape)
         attention_weight = nn.functional.softmax(scores, dim=-1)
         attention_weight = self.dropout(attention_weight)
+        # print("attention_weight: ", attention_weight.shape)
         return torch.matmul(attention_weight, value), attention_weight
 
 
@@ -73,17 +73,25 @@ class MultiheadAttention(nn.Module):
         return x.reshape(x.shape[0], x.shape[1], -1) # Batch * Length * size
 
     def forward(self, query, key, value, mask=None):
-        query = self.transpose(self.q(query), self.n_heads) # (Batch * N_head) * Length * num_hidden
+        """query = self.transpose(self.q(query), self.n_heads) # (Batch * N_head) * Length * num_hidden
         key= self.transpose(self.k(key), self.n_heads)
-        value = self.transpose(self.v(value), self.n_heads)
+        value = self.transpose(self.v(value), self.n_heads)"""
+        shape = query.shape
+        k_shape = key.shape
+        query = self.q(query).reshape(shape[0], shape[1], self.n_heads, -1).transpose(1, 2)
+        key = self.k(key).reshape(k_shape[0], k_shape[1], self.n_heads, -1).transpose(1, 2)
+        value = self.v(value).reshape(k_shape[0], k_shape[1], self.n_heads, -1).transpose(1, 2)
         
         if mask is not None:
             # 处理匹配多头
             mask = mask.unsqueeze(1)
         
+        # print("key ", key.shape)
         x, attetion_weight = self.attention(query, key, value, mask) # (Batch * N_head) * Length * D_model
-        output_concat = self.retranspose(output, self.n_heads)
-        return self.fc(output_concat), attetion_weight
+        # print(x.shape)
+        x_concat = x.transpose(1, 2).contiguous().view(shape[0], shape[1], -1)
+        # print(x.shape, x_concat.shape)
+        return self.fc(x_concat), attetion_weight
 
 
 class FeedForwardNetwork(nn.Module):
@@ -109,7 +117,7 @@ class AddNorm(nn.Module):
     
     def forward(self, x, y):
         x = self.dropout(x + y)
-        layer_norm = nn.LayerNorm(x.shape[1:])
+        layer_norm = nn.LayerNorm(x.shape[1:]).to(device)
         return layer_norm(x)
 
 
@@ -124,6 +132,7 @@ class EncoderBlock(nn.Module):
         self.addnorm2 = AddNorm(dropout=addnorm_dropout)    # 残差链接与归一化
     
     def forward(self, x, mask):
+        # print(x.shape, mask.shape)
         y, _ = self.attention(x, x, x, mask)
         x = self.addnorm1(x, y)
         y = self.ffn(x)
@@ -145,9 +154,10 @@ class DecoderBlock(nn.Module):
 
     def forward(self, x, enc_output, src_mask, tgt_mask):
         """前向传播"""
-        y, _ = attention1(x, x, x, tgt_mask)
+        # print("enc_output", enc_output.shape)
+        y, _ = self.attention1(x, x, x, tgt_mask)
         x = self.addnorm1(x, y)
-        y, _ = attention2(x, enc_output, enc_output, src_mask)
+        y, _ = self.attention2(x, enc_output, enc_output, src_mask)
         x = self.addnorm2(x, y)
         y = self.ffn(x)
         return self.addnorm3(x, y)
@@ -197,7 +207,7 @@ class Generator(nn.Module):
 
     def __init__(self, d_model, vocab_size):
         super(Generator, self).__init__()
-        self.net = nn.Linear(d_model, vocab_size)   # 线性变换层
+        self.net = nn.Linear(d_model, vocab_size, bias=False)   # 线性变换层
     
     def forward(self, x):
         return nn.functional.softmax(self.net(x), dim=-1)
@@ -231,6 +241,6 @@ class Transformer(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform(p)
 
-transformer = Transformer(20, 20, 10)
+"""transformer = Transformer(20, 20, 10)
 model = transformer.model
-print(model)
+print(model)"""
