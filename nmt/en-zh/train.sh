@@ -13,7 +13,7 @@ dim=256
 heads=4
 hidden=1024
 
-tag=baseline_${dataset}_layer${layers}_${dim}_${heads}_${hidden}
+tag=baseline_${dataset}_layer${layers}_${dim}_${heads}_${hidden}_prenorm
 
 dataset_dir=$root/nmt/en-zh/$dataset
 data_dir=$dataset_dir/data
@@ -45,6 +45,7 @@ CUDA_VISIBLE_DEVICES=0 nohup fairseq-train ${data_dir}/data-bin \
     --decoder-layers ${layers} \
     --decoder-embed-dim ${dim} --decoder-attention-heads ${heads} --decoder-ffn-embed-dim ${hidden} \
     --share-decoder-input-output-embed \
+    --encoder-normalize-before --decoder-normalize-before \
     --max-epoch 20 --max-update 200000 \
     --max-tokens 1024 --num-workers 8 --update-freq 4 \
     --no-progress-bar --log-interval 100 --seed 1 --report-accuracy\
