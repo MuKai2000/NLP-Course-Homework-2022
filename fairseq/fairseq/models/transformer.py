@@ -181,6 +181,11 @@ class TransformerModel(FairseqEncoderDecoderModel):
         # make sure all arguments are present in older models
         base_architecture(args)
 
+        # print key args
+        print("Key Args:")
+        print("\tencoder_normalize_before:",args.encoder_normalize_before)
+        print("\tdecoder_normalize_before:",args.decoder_normalize_before)
+
         if args.encoder_layers_to_keep:
             args.encoder_layers = len(args.encoder_layers_to_keep.split(","))
         if args.decoder_layers_to_keep:
