@@ -1,0 +1,463 @@
+2023-01-10 23:16:45 | INFO | fairseq_cli.train | Namespace(activation_dropout=0.1, activation_fn='relu', adam_betas='(0.9, 0.98)', adam_eps=1e-08, adaptive_input=False, adaptive_softmax_cutoff=None, adaptive_softmax_dropout=0, all_gather_list_size=16384, arch='transformer', attention_dropout=0.1, batch_size=None, batch_size_valid=None, best_checkpoint_metric='loss', bf16=False, bpe=None, broadcast_buffers=False, bucket_cap_mb=25, checkpoint_shard_count=1, checkpoint_suffix='', clip_norm=0.0, cpu=False, criterion='label_smoothed_cross_entropy', cross_self_attention=False, curriculum=0, data='/home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/data/data-bin', data_buffer_size=10, dataset_impl=None, ddp_backend='c10d', decoder_attention_heads=4, decoder_embed_dim=256, decoder_embed_path=None, decoder_ffn_embed_dim=1024, decoder_input_dim=256, decoder_layerdrop=0, decoder_layers=4, decoder_layers_to_keep=None, decoder_learned_pos=False, decoder_normalize_before=True, decoder_output_dim=256, device_id=0, disable_validation=False, distributed_backend='nccl', distributed_init_method=None, distributed_no_spawn=False, distributed_num_procs=1, distributed_port=-1, distributed_rank=0, distributed_world_size=1, distributed_wrapper='DDP', dropout=0.1, empty_cache_freq=0, encoder_attention_heads=4, encoder_embed_dim=256, encoder_embed_path=None, encoder_ffn_embed_dim=1024, encoder_layerdrop=0, encoder_layers=4, encoder_layers_to_keep=None, encoder_learned_pos=False, encoder_normalize_before=True, eval_bleu=False, eval_bleu_args=None, eval_bleu_detok='space', eval_bleu_detok_args=None, eval_bleu_print_samples=False, eval_bleu_remove_bpe=None, eval_tokenized_bleu=False, fast_stat_sync=False, find_unused_parameters=False, finetune_from_model=None, fix_batches_to_gpus=False, fixed_validation_seed=None, fp16=False, fp16_init_scale=128, fp16_no_flatten_grads=False, fp16_scale_tolerance=0.0, fp16_scale_window=None, gen_subset='test', ignore_prefix_size=0, keep_best_checkpoints=-1, keep_interval_updates=-1, keep_last_epochs=5, label_smoothing=0.1, layernorm_embedding=False, left_pad_source='True', left_pad_target='False', load_alignments=False, localsgd_frequency=3, log_format=None, log_interval=100, lr=[0.001], lr_scheduler='inverse_sqrt', max_epoch=20, max_source_positions=1024, max_target_positions=1024, max_tokens=1024, max_tokens_valid=1024, max_update=200000, maximize_best_checkpoint_metric=False, memory_efficient_bf16=False, memory_efficient_fp16=False, min_loss_scale=0.0001, min_lr=-1.0, model_parallel_size=1, no_cross_attention=False, no_epoch_checkpoints=False, no_last_checkpoints=False, no_progress_bar=True, no_save=False, no_save_optimizer_state=False, no_scale_embedding=False, no_seed_provided=False, no_token_positional_embeddings=False, nprocs_per_node=1, num_batch_buckets=0, num_shards=1, num_workers=8, optimizer='adam', optimizer_overrides='{}', patience=-1, pipeline_balance=None, pipeline_checkpoint='never', pipeline_chunks=0, pipeline_decoder_balance=None, pipeline_decoder_devices=None, pipeline_devices=None, pipeline_encoder_balance=None, pipeline_encoder_devices=None, pipeline_model_parallel=False, profile=False, quant_noise_pq=0, quant_noise_pq_block_size=8, quant_noise_scalar=0, quantization_config_path=None, report_accuracy=True, required_batch_size_multiple=8, required_seq_len_multiple=1, reset_dataloader=False, reset_lr_scheduler=False, reset_meters=False, reset_optimizer=False, restore_file='checkpoint_last.pt', save_dir='/home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints', save_interval=1, save_interval_updates=0, scoring='bleu', seed=1, sentence_avg=False, shard_id=0, share_all_embeddings=False, share_decoder_input_output_embed=True, skip_invalid_size_inputs_valid_test=True, slowmo_algorithm='LocalSGD', slowmo_momentum=None, source_lang='en', stop_time_hours=0, target_lang='zh', task='translation', tensorboard_logdir='/home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/tensorboard', threshold_loss_scale=None, tie_adaptive_weights=False, tokenizer=None, tpu=False, train_subset='train', truncate_source=False, update_freq=[4], upsample_primary=1, use_bmuf=False, use_old_adam=False, user_dir=None, valid_subset='valid', validate_after_updates=0, validate_interval=1, validate_interval_updates=0, warmup_init_lr=1e-07, warmup_updates=5000, weight_decay=0.0, zero_sharding='none')
+2023-01-10 23:16:45 | INFO | fairseq.tasks.translation | [en] dictionary: 29128 types
+2023-01-10 23:16:45 | INFO | fairseq.tasks.translation | [zh] dictionary: 33720 types
+2023-01-10 23:16:45 | INFO | fairseq.data.data_utils | loaded 2259 examples from: /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/data/data-bin/valid.en-zh.en
+2023-01-10 23:16:45 | INFO | fairseq.data.data_utils | loaded 2259 examples from: /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/data/data-bin/valid.en-zh.zh
+2023-01-10 23:16:45 | INFO | fairseq.tasks.translation | /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/data/data-bin valid en-zh 2259 examples
+Key Args:
+	encoder_normalize_before: True
+	decoder_normalize_before: True
+2023-01-10 23:16:46 | INFO | fairseq_cli.train | TransformerModel(
+  (encoder): TransformerEncoder(
+    (dropout_module): FairseqDropout()
+    (embed_tokens): Embedding(29128, 256, padding_idx=1)
+    (embed_positions): SinusoidalPositionalEmbedding()
+    (layers): ModuleList(
+      (0): TransformerEncoderLayer(
+        (self_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout_module): FairseqDropout()
+        (activation_dropout_module): FairseqDropout()
+        (fc1): Linear(in_features=256, out_features=1024, bias=True)
+        (fc2): Linear(in_features=1024, out_features=256, bias=True)
+        (final_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (1): TransformerEncoderLayer(
+        (self_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout_module): FairseqDropout()
+        (activation_dropout_module): FairseqDropout()
+        (fc1): Linear(in_features=256, out_features=1024, bias=True)
+        (fc2): Linear(in_features=1024, out_features=256, bias=True)
+        (final_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (2): TransformerEncoderLayer(
+        (self_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout_module): FairseqDropout()
+        (activation_dropout_module): FairseqDropout()
+        (fc1): Linear(in_features=256, out_features=1024, bias=True)
+        (fc2): Linear(in_features=1024, out_features=256, bias=True)
+        (final_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (3): TransformerEncoderLayer(
+        (self_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout_module): FairseqDropout()
+        (activation_dropout_module): FairseqDropout()
+        (fc1): Linear(in_features=256, out_features=1024, bias=True)
+        (fc2): Linear(in_features=1024, out_features=256, bias=True)
+        (final_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    (layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+  )
+  (decoder): TransformerDecoder(
+    (dropout_module): FairseqDropout()
+    (embed_tokens): Embedding(33720, 256, padding_idx=1)
+    (embed_positions): SinusoidalPositionalEmbedding()
+    (layers): ModuleList(
+      (0): TransformerDecoderLayer(
+        (dropout_module): FairseqDropout()
+        (self_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (activation_dropout_module): FairseqDropout()
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (encoder_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (encoder_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (fc1): Linear(in_features=256, out_features=1024, bias=True)
+        (fc2): Linear(in_features=1024, out_features=256, bias=True)
+        (final_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (1): TransformerDecoderLayer(
+        (dropout_module): FairseqDropout()
+        (self_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (activation_dropout_module): FairseqDropout()
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (encoder_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (encoder_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (fc1): Linear(in_features=256, out_features=1024, bias=True)
+        (fc2): Linear(in_features=1024, out_features=256, bias=True)
+        (final_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (2): TransformerDecoderLayer(
+        (dropout_module): FairseqDropout()
+        (self_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (activation_dropout_module): FairseqDropout()
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (encoder_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (encoder_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (fc1): Linear(in_features=256, out_features=1024, bias=True)
+        (fc2): Linear(in_features=1024, out_features=256, bias=True)
+        (final_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (3): TransformerDecoderLayer(
+        (dropout_module): FairseqDropout()
+        (self_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (activation_dropout_module): FairseqDropout()
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (encoder_attn): MultiheadAttention(
+          (dropout_module): FairseqDropout()
+          (k_proj): Linear(in_features=256, out_features=256, bias=True)
+          (v_proj): Linear(in_features=256, out_features=256, bias=True)
+          (q_proj): Linear(in_features=256, out_features=256, bias=True)
+          (out_proj): Linear(in_features=256, out_features=256, bias=True)
+        )
+        (encoder_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (fc1): Linear(in_features=256, out_features=1024, bias=True)
+        (fc2): Linear(in_features=1024, out_features=256, bias=True)
+        (final_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    (layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+    (output_projection): Linear(in_features=256, out_features=33720, bias=False)
+  )
+)
+2023-01-10 23:16:46 | INFO | fairseq_cli.train | task: translation (TranslationTask)
+2023-01-10 23:16:46 | INFO | fairseq_cli.train | model: transformer (TransformerModel)
+2023-01-10 23:16:46 | INFO | fairseq_cli.train | criterion: label_smoothed_cross_entropy (LabelSmoothedCrossEntropyCriterion)
+2023-01-10 23:16:46 | INFO | fairseq_cli.train | num. model params: 23462912 (num. trained: 23462912)
+2023-01-10 23:16:48 | INFO | fairseq.trainer | detected shared parameter: decoder.embed_tokens.weight <- decoder.output_projection.weight
+2023-01-10 23:16:48 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
+2023-01-10 23:16:48 | INFO | fairseq.utils | rank   0: capabilities =  6.1  ; total memory = 6.000 GB ; name = NVIDIA GeForce GTX 1060                 
+2023-01-10 23:16:48 | INFO | fairseq.utils | ***********************CUDA enviroments for all 1 workers***********************
+2023-01-10 23:16:48 | INFO | fairseq_cli.train | training on 1 devices (GPUs/TPUs)
+2023-01-10 23:16:48 | INFO | fairseq_cli.train | max tokens per GPU = 1024 and max sentences per GPU = None
+2023-01-10 23:16:48 | INFO | fairseq.trainer | no existing checkpoint found /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint_last.pt
+2023-01-10 23:16:48 | INFO | fairseq.trainer | loading train data for epoch 1
+2023-01-10 23:16:48 | INFO | fairseq.data.data_utils | loaded 85727 examples from: /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/data/data-bin/train.en-zh.en
+2023-01-10 23:16:48 | INFO | fairseq.data.data_utils | loaded 85727 examples from: /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/data/data-bin/train.en-zh.zh
+2023-01-10 23:16:48 | INFO | fairseq.tasks.translation | /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/data/data-bin train en-zh 85727 examples
+2023-01-10 23:16:49 | INFO | fairseq.trainer | begin training epoch 1
+2023-01-10 23:18:09 | INFO | train_inner | epoch 001:    100 / 628 loss=14.944, nll_loss=14.838, total=3165.66, n_correct=67.73, ppl=29283.2, accuracy=2.14, wps=4011.5, ups=1.27, wpb=3165.7, bsz=134.2, num_updates=100, lr=2.0098e-05, gnorm=2.09, train_wall=80, wall=80
+2023-01-10 23:19:24 | INFO | train_inner | epoch 001:    200 / 628 loss=13.306, nll_loss=13.025, total=3166.45, n_correct=228.52, ppl=8338.04, accuracy=7.217, wps=4191.5, ups=1.32, wpb=3166.4, bsz=135.8, num_updates=200, lr=4.0096e-05, gnorm=0.927, train_wall=75, wall=156
+2023-01-10 23:20:41 | INFO | train_inner | epoch 001:    300 / 628 loss=12.069, nll_loss=11.643, total=3149.27, n_correct=368.55, ppl=3198.46, accuracy=11.703, wps=4099.1, ups=1.3, wpb=3149.3, bsz=137, num_updates=300, lr=6.0094e-05, gnorm=0.695, train_wall=77, wall=233
+2023-01-10 23:21:56 | INFO | train_inner | epoch 001:    400 / 628 loss=11.111, nll_loss=10.531, total=3178.82, n_correct=416.6, ppl=1479.74, accuracy=13.105, wps=4252.6, ups=1.34, wpb=3178.8, bsz=137.7, num_updates=400, lr=8.0092e-05, gnorm=0.55, train_wall=74, wall=307
+2023-01-10 23:23:11 | INFO | train_inner | epoch 001:    500 / 628 loss=10.703, nll_loss=10.019, total=3118.65, n_correct=432.51, ppl=1037.78, accuracy=13.869, wps=4154.2, ups=1.33, wpb=3118.7, bsz=134.2, num_updates=500, lr=0.00010009, gnorm=0.562, train_wall=75, wall=382
+2023-01-10 23:24:29 | INFO | train_inner | epoch 001:    600 / 628 loss=10.517, nll_loss=9.784, total=3183.01, n_correct=487.12, ppl=881.32, accuracy=15.304, wps=4055.4, ups=1.27, wpb=3183, bsz=141, num_updates=600, lr=0.000120088, gnorm=0.541, train_wall=78, wall=461
+2023-01-10 23:24:49 | INFO | fairseq_cli.train | begin validation on "valid" subset
+/home/koukaiqi0907/NLP-Course-Homework-2022/fairseq/fairseq/utils.py:341: UserWarning: amp_C fused kernels unavailable, disabling multi_tensor_l2norm; you may get better performance by installing NVIDIA's apex library
+  warnings.warn(
+2023-01-10 23:24:55 | INFO | valid | epoch 001 | valid on 'valid' subset | loss 10.472 | nll_loss 9.71 | total 668 | n_correct 104.57 | ppl 837.33 | accuracy 15.654 | wps 10163.3 | wpb 668 | bsz 28.6 | num_updates 628
+2023-01-10 23:24:55 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-10 23:24:56 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint1.pt (epoch 1 @ 628 updates, score 10.472) (writing took 1.1117702999981702 seconds)
+2023-01-10 23:24:56 | INFO | fairseq_cli.train | end of epoch 1 (average epoch stats below)
+2023-01-10 23:24:56 | INFO | train | epoch 001 | loss 12.036 | nll_loss 11.556 | total 3160 | n_correct 340.408 | ppl 3010.12 | accuracy 10.772 | wps 4081.6 | ups 1.29 | wpb 3160 | bsz 136.5 | num_updates 628 | lr 0.000125687 | gnorm 0.882 | train_wall 479 | wall 487
+2023-01-10 23:24:56 | INFO | fairseq.trainer | begin training epoch 2
+2023-01-10 23:25:49 | INFO | train_inner | epoch 002:     72 / 628 loss=10.407, nll_loss=9.652, total=3185.84, n_correct=501.16, ppl=804.67, accuracy=15.731, wps=3976.6, ups=1.25, wpb=3185.8, bsz=135.4, num_updates=700, lr=0.000140086, gnorm=0.662, train_wall=73, wall=541
+2023-01-10 23:27:03 | INFO | train_inner | epoch 002:    172 / 628 loss=10.25, nll_loss=9.472, total=3156.08, n_correct=546.09, ppl=710.31, accuracy=17.303, wps=4297.5, ups=1.36, wpb=3156.1, bsz=140.7, num_updates=800, lr=0.000160084, gnorm=0.619, train_wall=73, wall=614
+2023-01-10 23:28:18 | INFO | train_inner | epoch 002:    272 / 628 loss=10.125, nll_loss=9.329, total=3179.83, n_correct=580.08, ppl=643.21, accuracy=18.242, wps=4250, ups=1.34, wpb=3179.8, bsz=135.1, num_updates=900, lr=0.000180082, gnorm=0.661, train_wall=75, wall=689
+2023-01-10 23:29:32 | INFO | train_inner | epoch 002:    372 / 628 loss=9.94, nll_loss=9.12, total=3164.2, n_correct=623.57, ppl=556.33, accuracy=19.707, wps=4239.9, ups=1.34, wpb=3164.2, bsz=138.6, num_updates=1000, lr=0.00020008, gnorm=0.642, train_wall=74, wall=764
+2023-01-10 23:30:47 | INFO | train_inner | epoch 002:    472 / 628 loss=9.771, nll_loss=8.926, total=3159.94, n_correct=652.19, ppl=486.54, accuracy=20.639, wps=4263.7, ups=1.35, wpb=3159.9, bsz=137.5, num_updates=1100, lr=0.000220078, gnorm=0.72, train_wall=74, wall=838
+2023-01-10 23:32:00 | INFO | train_inner | epoch 002:    572 / 628 loss=9.602, nll_loss=8.736, total=3158.16, n_correct=689.01, ppl=426.43, accuracy=21.817, wps=4305.4, ups=1.36, wpb=3158.2, bsz=135.9, num_updates=1200, lr=0.000240076, gnorm=0.703, train_wall=73, wall=911
+2023-01-10 23:32:46 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-10 23:32:52 | INFO | valid | epoch 002 | valid on 'valid' subset | loss 9.376 | nll_loss 8.48 | total 668 | n_correct 156.658 | ppl 357.16 | accuracy 23.452 | wps 8401.5 | wpb 668 | bsz 28.6 | num_updates 1256 | best_loss 9.376
+2023-01-10 23:32:52 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-10 23:32:56 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint2.pt (epoch 2 @ 1256 updates, score 9.376) (writing took 3.7970258999994257 seconds)
+2023-01-10 23:32:56 | INFO | fairseq_cli.train | end of epoch 2 (average epoch stats below)
+2023-01-10 23:32:56 | INFO | train | epoch 002 | loss 9.954 | nll_loss 9.136 | total 3160 | n_correct 610.997 | ppl 562.5 | accuracy 19.335 | wps 4135.1 | ups 1.31 | wpb 3160 | bsz 136.5 | num_updates 1256 | lr 0.000251275 | gnorm 0.673 | train_wall 467 | wall 967
+2023-01-10 23:32:56 | INFO | fairseq.trainer | begin training epoch 3
+2023-01-10 23:33:30 | INFO | train_inner | epoch 003:     44 / 628 loss=9.424, nll_loss=8.534, total=3147.94, n_correct=716.52, ppl=370.74, accuracy=22.762, wps=3490.3, ups=1.11, wpb=3147.9, bsz=132.5, num_updates=1300, lr=0.000260074, gnorm=0.708, train_wall=79, wall=1002
+2023-01-10 23:34:45 | INFO | train_inner | epoch 003:    144 / 628 loss=9.241, nll_loss=8.325, total=3153, n_correct=749.54, ppl=320.6, accuracy=23.772, wps=4199.8, ups=1.33, wpb=3153, bsz=137, num_updates=1400, lr=0.000280072, gnorm=0.769, train_wall=75, wall=1077
+2023-01-10 23:36:00 | INFO | train_inner | epoch 003:    244 / 628 loss=9.115, nll_loss=8.181, total=3146.41, n_correct=767.18, ppl=290.2, accuracy=24.383, wps=4219.8, ups=1.34, wpb=3146.4, bsz=137.4, num_updates=1500, lr=0.00030007, gnorm=0.756, train_wall=74, wall=1151
+2023-01-10 23:37:14 | INFO | train_inner | epoch 003:    344 / 628 loss=9.011, nll_loss=8.062, total=3168.6, n_correct=790.17, ppl=267.27, accuracy=24.938, wps=4287, ups=1.35, wpb=3168.6, bsz=129.8, num_updates=1600, lr=0.000320068, gnorm=0.738, train_wall=74, wall=1225
+2023-01-10 23:38:32 | INFO | train_inner | epoch 003:    444 / 628 loss=8.839, nll_loss=7.866, total=3178.79, n_correct=824.07, ppl=233.32, accuracy=25.924, wps=4077.7, ups=1.28, wpb=3178.8, bsz=137.6, num_updates=1700, lr=0.000340066, gnorm=0.761, train_wall=78, wall=1303
+2023-01-10 23:39:46 | INFO | train_inner | epoch 003:    544 / 628 loss=8.754, nll_loss=7.769, total=3173.45, n_correct=835.58, ppl=218.07, accuracy=26.33, wps=4242.7, ups=1.34, wpb=3173.4, bsz=140.2, num_updates=1800, lr=0.000360064, gnorm=0.771, train_wall=74, wall=1378
+2023-01-10 23:40:48 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-10 23:40:53 | INFO | valid | epoch 003 | valid on 'valid' subset | loss 8.521 | nll_loss 7.469 | total 668 | n_correct 191.241 | ppl 177.13 | accuracy 28.629 | wps 11340.3 | wpb 668 | bsz 28.6 | num_updates 1884 | best_loss 8.521
+2023-01-10 23:40:53 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-10 23:40:55 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint3.pt (epoch 3 @ 1884 updates, score 8.521) (writing took 1.2929863000026671 seconds)
+2023-01-10 23:40:55 | INFO | fairseq_cli.train | end of epoch 3 (average epoch stats below)
+2023-01-10 23:40:55 | INFO | train | epoch 003 | loss 8.967 | nll_loss 8.013 | total 3160 | n_correct 797.01 | ppl 258.26 | accuracy 25.222 | wps 4145.8 | ups 1.31 | wpb 3160 | bsz 136.5 | num_updates 1884 | lr 0.000376862 | gnorm 0.754 | train_wall 470 | wall 1446
+2023-01-10 23:40:55 | INFO | fairseq.trainer | begin training epoch 4
+2023-01-10 23:41:07 | INFO | train_inner | epoch 004:     16 / 628 loss=8.603, nll_loss=7.598, total=3103.76, n_correct=845.28, ppl=193.74, accuracy=27.234, wps=3827, ups=1.23, wpb=3103.8, bsz=135.7, num_updates=1900, lr=0.000380062, gnorm=0.745, train_wall=74, wall=1459
+2023-01-10 23:42:24 | INFO | train_inner | epoch 004:    116 / 628 loss=8.381, nll_loss=7.344, total=3174.53, n_correct=896.45, ppl=162.52, accuracy=28.239, wps=4170.9, ups=1.31, wpb=3174.5, bsz=137.4, num_updates=2000, lr=0.00040006, gnorm=0.765, train_wall=76, wall=1535
+2023-01-10 23:43:37 | INFO | train_inner | epoch 004:    216 / 628 loss=8.303, nll_loss=7.255, total=3151.5, n_correct=912.38, ppl=152.73, accuracy=28.951, wps=4274.8, ups=1.36, wpb=3151.5, bsz=141.1, num_updates=2100, lr=0.000420058, gnorm=0.77, train_wall=73, wall=1609
+2023-01-10 23:44:53 | INFO | train_inner | epoch 004:    316 / 628 loss=8.254, nll_loss=7.197, total=3153.75, n_correct=918.68, ppl=146.77, accuracy=29.13, wps=4171.1, ups=1.32, wpb=3153.8, bsz=134.8, num_updates=2200, lr=0.000440056, gnorm=0.766, train_wall=75, wall=1684
+2023-01-10 23:46:10 | INFO | train_inner | epoch 004:    416 / 628 loss=8.126, nll_loss=7.052, total=3147.34, n_correct=940.68, ppl=132.69, accuracy=29.888, wps=4102.3, ups=1.3, wpb=3147.3, bsz=136.7, num_updates=2300, lr=0.000460054, gnorm=0.773, train_wall=76, wall=1761
+2023-01-10 23:47:26 | INFO | train_inner | epoch 004:    516 / 628 loss=8.056, nll_loss=6.97, total=3160.5, n_correct=956.4, ppl=125.38, accuracy=30.261, wps=4114.6, ups=1.3, wpb=3160.5, bsz=134.6, num_updates=2400, lr=0.000480052, gnorm=0.784, train_wall=77, wall=1838
+2023-01-10 23:48:54 | INFO | train_inner | epoch 004:    616 / 628 loss=7.998, nll_loss=6.904, total=3194.44, n_correct=980.84, ppl=119.78, accuracy=30.705, wps=3661.2, ups=1.15, wpb=3194.4, bsz=134.5, num_updates=2500, lr=0.00050005, gnorm=0.765, train_wall=87, wall=1925
+2023-01-10 23:49:04 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-10 23:49:09 | INFO | valid | epoch 004 | valid on 'valid' subset | loss 7.86 | nll_loss 6.73 | total 668 | n_correct 218.038 | ppl 106.13 | accuracy 32.64 | wps 9800.2 | wpb 668 | bsz 28.6 | num_updates 2512 | best_loss 7.86
+2023-01-10 23:49:09 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-10 23:49:11 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint4.pt (epoch 4 @ 2512 updates, score 7.86) (writing took 1.239615500002401 seconds)
+2023-01-10 23:49:11 | INFO | fairseq_cli.train | end of epoch 4 (average epoch stats below)
+2023-01-10 23:49:11 | INFO | train | epoch 004 | loss 8.186 | nll_loss 7.12 | total 3160 | n_correct 933.513 | ppl 139.12 | accuracy 29.542 | wps 4001.3 | ups 1.27 | wpb 3160 | bsz 136.5 | num_updates 2512 | lr 0.00050245 | gnorm 0.771 | train_wall 486 | wall 1942
+2023-01-10 23:49:11 | INFO | fairseq.trainer | begin training epoch 5
+2023-01-10 23:50:25 | INFO | train_inner | epoch 005:     88 / 628 loss=7.736, nll_loss=6.608, total=3138.71, n_correct=1010.47, ppl=97.51, accuracy=32.194, wps=3432.4, ups=1.09, wpb=3138.7, bsz=135.1, num_updates=2600, lr=0.000520048, gnorm=0.785, train_wall=84, wall=2017
+2023-01-10 23:51:54 | INFO | train_inner | epoch 005:    188 / 628 loss=7.624, nll_loss=6.478, total=3158.14, n_correct=1044.04, ppl=89.13, accuracy=33.059, wps=3537.1, ups=1.12, wpb=3158.1, bsz=138.2, num_updates=2700, lr=0.000540046, gnorm=0.78, train_wall=89, wall=2106
+2023-01-10 23:53:20 | INFO | train_inner | epoch 005:    288 / 628 loss=7.564, nll_loss=6.407, total=3160.38, n_correct=1055.83, ppl=84.87, accuracy=33.408, wps=3697.9, ups=1.17, wpb=3160.4, bsz=136.2, num_updates=2800, lr=0.000560044, gnorm=0.808, train_wall=85, wall=2191
+2023-01-10 23:54:46 | INFO | train_inner | epoch 005:    388 / 628 loss=7.516, nll_loss=6.352, total=3181.92, n_correct=1075.5, ppl=81.67, accuracy=33.8, wps=3712.5, ups=1.17, wpb=3181.9, bsz=138.9, num_updates=2900, lr=0.000580042, gnorm=0.8, train_wall=85, wall=2277
+2023-01-10 23:56:18 | INFO | train_inner | epoch 005:    488 / 628 loss=7.508, nll_loss=6.341, total=3182.88, n_correct=1076.73, ppl=81.08, accuracy=33.829, wps=3454.3, ups=1.09, wpb=3182.9, bsz=134.8, num_updates=3000, lr=0.00060004, gnorm=0.815, train_wall=92, wall=2369
+2023-01-10 23:57:47 | INFO | train_inner | epoch 005:    588 / 628 loss=7.43, nll_loss=6.253, total=3160.22, n_correct=1095.15, ppl=76.28, accuracy=34.654, wps=3546.2, ups=1.12, wpb=3160.2, bsz=140.2, num_updates=3100, lr=0.000620038, gnorm=0.793, train_wall=89, wall=2458
+2023-01-10 23:58:21 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-10 23:58:27 | INFO | valid | epoch 005 | valid on 'valid' subset | loss 7.376 | nll_loss 6.149 | total 668 | n_correct 243.228 | ppl 70.95 | accuracy 36.411 | wps 8970.2 | wpb 668 | bsz 28.6 | num_updates 3140 | best_loss 7.376
+2023-01-10 23:58:27 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-10 23:58:28 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint5.pt (epoch 5 @ 3140 updates, score 7.376) (writing took 1.3543514999983017 seconds)
+2023-01-10 23:58:28 | INFO | fairseq_cli.train | end of epoch 5 (average epoch stats below)
+2023-01-10 23:58:28 | INFO | train | epoch 005 | loss 7.547 | nll_loss 6.388 | total 3160 | n_correct 1061.62 | ppl 83.74 | accuracy 33.595 | wps 3559.1 | ups 1.13 | wpb 3160 | bsz 136.5 | num_updates 3140 | lr 0.000628037 | gnorm 0.797 | train_wall 548 | wall 2500
+2023-01-10 23:58:28 | INFO | fairseq.trainer | begin training epoch 6
+2023-01-10 23:59:19 | INFO | train_inner | epoch 006:     60 / 628 loss=7.194, nll_loss=5.984, total=3100.05, n_correct=1116.01, ppl=63.31, accuracy=36, wps=3357.6, ups=1.08, wpb=3100.1, bsz=133.6, num_updates=3200, lr=0.000640036, gnorm=0.815, train_wall=84, wall=2551
+2023-01-11 00:00:49 | INFO | train_inner | epoch 006:    160 / 628 loss=7.05, nll_loss=5.818, total=3189.85, n_correct=1180.14, ppl=56.41, accuracy=36.997, wps=3554.3, ups=1.11, wpb=3189.8, bsz=138.1, num_updates=3300, lr=0.000660034, gnorm=0.807, train_wall=89, wall=2641
+2023-01-11 00:02:14 | INFO | train_inner | epoch 006:    260 / 628 loss=7.062, nll_loss=5.829, total=3167.62, n_correct=1168.45, ppl=56.85, accuracy=36.887, wps=3714, ups=1.17, wpb=3167.6, bsz=133.7, num_updates=3400, lr=0.000680032, gnorm=0.804, train_wall=85, wall=2726
+2023-01-11 00:03:44 | INFO | train_inner | epoch 006:    360 / 628 loss=7.001, nll_loss=5.758, total=3181.12, n_correct=1199.61, ppl=54.12, accuracy=37.71, wps=3532.2, ups=1.11, wpb=3181.1, bsz=137, num_updates=3500, lr=0.00070003, gnorm=0.807, train_wall=90, wall=2816
+2023-01-11 00:05:15 | INFO | train_inner | epoch 006:    460 / 628 loss=6.943, nll_loss=5.691, total=3165.07, n_correct=1211.18, ppl=51.64, accuracy=38.267, wps=3509.7, ups=1.11, wpb=3165.1, bsz=138.3, num_updates=3600, lr=0.000720028, gnorm=0.821, train_wall=90, wall=2906
+2023-01-11 00:06:40 | INFO | train_inner | epoch 006:    560 / 628 loss=6.932, nll_loss=5.679, total=3100.42, n_correct=1192.55, ppl=51.23, accuracy=38.464, wps=3634.1, ups=1.17, wpb=3100.4, bsz=133.3, num_updates=3700, lr=0.000740026, gnorm=0.819, train_wall=85, wall=2991
+2023-01-11 00:07:36 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 00:07:42 | INFO | valid | epoch 006 | valid on 'valid' subset | loss 6.915 | nll_loss 5.621 | total 668 | n_correct 268.367 | ppl 49.23 | accuracy 40.175 | wps 9867.3 | wpb 668 | bsz 28.6 | num_updates 3768 | best_loss 6.915
+2023-01-11 00:07:42 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 00:07:43 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint6.pt (epoch 6 @ 3768 updates, score 6.915) (writing took 1.1555928000016138 seconds)
+2023-01-11 00:07:43 | INFO | fairseq_cli.train | end of epoch 6 (average epoch stats below)
+2023-01-11 00:07:43 | INFO | train | epoch 006 | loss 6.99 | nll_loss 5.747 | total 3160 | n_correct 1192.26 | ppl 53.72 | accuracy 37.73 | wps 3577.4 | ups 1.13 | wpb 3160 | bsz 136.5 | num_updates 3768 | lr 0.000753625 | gnorm 0.809 | train_wall 546 | wall 3054
+2023-01-11 00:07:43 | INFO | fairseq.trainer | begin training epoch 7
+2023-01-11 00:08:09 | INFO | train_inner | epoch 007:     32 / 628 loss=6.768, nll_loss=5.492, total=3157.36, n_correct=1250.38, ppl=45, accuracy=39.602, wps=3523.1, ups=1.12, wpb=3157.4, bsz=134.6, num_updates=3800, lr=0.000760024, gnorm=0.801, train_wall=82, wall=3081
+2023-01-11 00:09:30 | INFO | train_inner | epoch 007:    132 / 628 loss=6.534, nll_loss=5.224, total=3172.07, n_correct=1303.4, ppl=37.39, accuracy=41.09, wps=3922.8, ups=1.24, wpb=3172.1, bsz=136.9, num_updates=3900, lr=0.000780022, gnorm=0.793, train_wall=81, wall=3162
+2023-01-11 00:10:50 | INFO | train_inner | epoch 007:    232 / 628 loss=6.548, nll_loss=5.236, total=3193.87, n_correct=1316.83, ppl=37.69, accuracy=41.23, wps=4004.8, ups=1.25, wpb=3193.9, bsz=135, num_updates=4000, lr=0.00080002, gnorm=0.804, train_wall=79, wall=3242
+2023-01-11 00:12:14 | INFO | train_inner | epoch 007:    332 / 628 loss=6.543, nll_loss=5.229, total=3129.92, n_correct=1294.34, ppl=37.51, accuracy=41.354, wps=3742.6, ups=1.2, wpb=3129.9, bsz=135.5, num_updates=4100, lr=0.000820018, gnorm=0.813, train_wall=83, wall=3325
+2023-01-11 00:13:37 | INFO | train_inner | epoch 007:    432 / 628 loss=6.498, nll_loss=5.177, total=3198.93, n_correct=1336.75, ppl=36.17, accuracy=41.787, wps=3864.5, ups=1.21, wpb=3198.9, bsz=140.8, num_updates=4200, lr=0.000840016, gnorm=0.791, train_wall=82, wall=3408
+2023-01-11 00:14:56 | INFO | train_inner | epoch 007:    532 / 628 loss=6.526, nll_loss=5.208, total=3125.14, n_correct=1304.56, ppl=36.96, accuracy=41.744, wps=3934.2, ups=1.26, wpb=3125.1, bsz=138, num_updates=4300, lr=0.000860014, gnorm=0.799, train_wall=79, wall=3487
+2023-01-11 00:16:14 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 00:16:20 | INFO | valid | epoch 007 | valid on 'valid' subset | loss 6.601 | nll_loss 5.247 | total 668 | n_correct 287.241 | ppl 37.97 | accuracy 43 | wps 9318.2 | wpb 668 | bsz 28.6 | num_updates 4396 | best_loss 6.601
+2023-01-11 00:16:20 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 00:16:21 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint7.pt (epoch 7 @ 4396 updates, score 6.601) (writing took 1.2160358999972232 seconds)
+2023-01-11 00:16:21 | INFO | fairseq_cli.train | end of epoch 7 (average epoch stats below)
+2023-01-11 00:16:21 | INFO | train | epoch 007 | loss 6.519 | nll_loss 5.203 | total 3160 | n_correct 1312.96 | ppl 36.84 | accuracy 41.549 | wps 3830.6 | ups 1.21 | wpb 3160 | bsz 136.5 | num_updates 4396 | lr 0.000879212 | gnorm 0.801 | train_wall 509 | wall 3572
+2023-01-11 00:16:21 | INFO | fairseq.trainer | begin training epoch 8
+2023-01-11 00:16:25 | INFO | train_inner | epoch 008:      4 / 628 loss=6.444, nll_loss=5.116, total=3157.27, n_correct=1339.56, ppl=34.67, accuracy=42.428, wps=3560.8, ups=1.13, wpb=3157.3, bsz=136.2, num_updates=4400, lr=0.000880012, gnorm=0.789, train_wall=81, wall=3576
+2023-01-11 00:17:47 | INFO | train_inner | epoch 008:    104 / 628 loss=6.129, nll_loss=4.756, total=3167.24, n_correct=1414.45, ppl=27.03, accuracy=44.659, wps=3852.3, ups=1.22, wpb=3167.2, bsz=139.4, num_updates=4500, lr=0.00090001, gnorm=0.778, train_wall=82, wall=3658
+2023-01-11 00:19:08 | INFO | train_inner | epoch 008:    204 / 628 loss=6.13, nll_loss=4.753, total=3167.74, n_correct=1410.28, ppl=26.96, accuracy=44.52, wps=3888.4, ups=1.23, wpb=3167.7, bsz=136.9, num_updates=4600, lr=0.000920008, gnorm=0.785, train_wall=81, wall=3740
+2023-01-11 00:20:32 | INFO | train_inner | epoch 008:    304 / 628 loss=6.177, nll_loss=4.805, total=3192.73, n_correct=1413.67, ppl=27.95, accuracy=44.278, wps=3838.7, ups=1.2, wpb=3192.7, bsz=136.6, num_updates=4700, lr=0.000940006, gnorm=0.791, train_wall=83, wall=3823
+2023-01-11 00:21:56 | INFO | train_inner | epoch 008:    404 / 628 loss=6.247, nll_loss=4.883, total=3176.37, n_correct=1386.27, ppl=29.51, accuracy=43.643, wps=3754.2, ups=1.18, wpb=3176.4, bsz=132.4, num_updates=4800, lr=0.000960004, gnorm=0.782, train_wall=84, wall=3908
+2023-01-11 00:23:18 | INFO | train_inner | epoch 008:    504 / 628 loss=6.194, nll_loss=4.823, total=3161.46, n_correct=1405.83, ppl=28.31, accuracy=44.468, wps=3873.1, ups=1.23, wpb=3161.5, bsz=140.3, num_updates=4900, lr=0.000980002, gnorm=0.766, train_wall=81, wall=3989
+2023-01-11 00:24:41 | INFO | train_inner | epoch 008:    604 / 628 loss=6.201, nll_loss=4.831, total=3135.26, n_correct=1390.8, ppl=28.47, accuracy=44.36, wps=3762.6, ups=1.2, wpb=3135.3, bsz=136.8, num_updates=5000, lr=0.001, gnorm=0.778, train_wall=83, wall=4073
+2023-01-11 00:25:00 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 00:25:05 | INFO | valid | epoch 008 | valid on 'valid' subset | loss 6.429 | nll_loss 5.051 | total 668 | n_correct 296.759 | ppl 33.15 | accuracy 44.425 | wps 9788.7 | wpb 668 | bsz 28.6 | num_updates 5024 | best_loss 6.429
+2023-01-11 00:25:05 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 00:25:07 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint8.pt (epoch 8 @ 5024 updates, score 6.429) (writing took 1.1430394999988494 seconds)
+2023-01-11 00:25:07 | INFO | fairseq_cli.train | end of epoch 8 (average epoch stats below)
+2023-01-11 00:25:07 | INFO | train | epoch 008 | loss 6.182 | nll_loss 4.812 | total 3160 | n_correct 1399.85 | ppl 28.08 | accuracy 44.299 | wps 3775.6 | ups 1.19 | wpb 3160 | bsz 136.5 | num_updates 5024 | lr 0.000997609 | gnorm 0.78 | train_wall 517 | wall 4098
+2023-01-11 00:25:07 | INFO | fairseq.trainer | begin training epoch 9
+2023-01-11 00:26:08 | INFO | train_inner | epoch 009:     76 / 628 loss=5.888, nll_loss=4.476, total=3137.22, n_correct=1462.31, ppl=22.25, accuracy=46.612, wps=3600.9, ups=1.15, wpb=3137.2, bsz=134.9, num_updates=5100, lr=0.000990148, gnorm=0.756, train_wall=80, wall=4160
+2023-01-11 00:27:31 | INFO | train_inner | epoch 009:    176 / 628 loss=5.836, nll_loss=4.412, total=3170.02, n_correct=1491.6, ppl=21.29, accuracy=47.053, wps=3829.3, ups=1.21, wpb=3170, bsz=138.7, num_updates=5200, lr=0.000980581, gnorm=0.763, train_wall=82, wall=4243
+2023-01-11 00:28:53 | INFO | train_inner | epoch 009:    276 / 628 loss=5.923, nll_loss=4.508, total=3133.05, n_correct=1450.87, ppl=22.76, accuracy=46.309, wps=3798.2, ups=1.21, wpb=3133.1, bsz=132.2, num_updates=5300, lr=0.000971286, gnorm=0.765, train_wall=82, wall=4325
+2023-01-11 00:30:16 | INFO | train_inner | epoch 009:    376 / 628 loss=5.954, nll_loss=4.543, total=3198.55, n_correct=1476.95, ppl=23.31, accuracy=46.176, wps=3889, ups=1.22, wpb=3198.6, bsz=134.4, num_updates=5400, lr=0.00096225, gnorm=0.756, train_wall=82, wall=4407
+2023-01-11 00:31:38 | INFO | train_inner | epoch 009:    476 / 628 loss=5.904, nll_loss=4.489, total=3139.63, n_correct=1473.08, ppl=22.45, accuracy=46.919, wps=3837.9, ups=1.22, wpb=3139.6, bsz=140.5, num_updates=5500, lr=0.000953463, gnorm=0.738, train_wall=81, wall=4489
+2023-01-11 00:33:01 | INFO | train_inner | epoch 009:    576 / 628 loss=5.937, nll_loss=4.524, total=3171.66, n_correct=1475.99, ppl=23.01, accuracy=46.537, wps=3816.2, ups=1.2, wpb=3171.7, bsz=134.4, num_updates=5600, lr=0.000944911, gnorm=0.747, train_wall=83, wall=4572
+2023-01-11 00:33:42 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 00:33:47 | INFO | valid | epoch 009 | valid on 'valid' subset | loss 6.318 | nll_loss 4.876 | total 668 | n_correct 305.152 | ppl 29.37 | accuracy 45.681 | wps 11191.1 | wpb 668 | bsz 28.6 | num_updates 5652 | best_loss 6.318
+2023-01-11 00:33:47 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 00:33:50 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint9.pt (epoch 9 @ 5652 updates, score 6.318) (writing took 2.6222987000001012 seconds)
+2023-01-11 00:33:50 | INFO | fairseq_cli.train | end of epoch 9 (average epoch stats below)
+2023-01-11 00:33:50 | INFO | train | epoch 009 | loss 5.897 | nll_loss 4.48 | total 3160 | n_correct 1476.3 | ppl 22.32 | accuracy 46.718 | wps 3794.2 | ups 1.2 | wpb 3160 | bsz 136.5 | num_updates 5652 | lr 0.000940554 | gnorm 0.753 | train_wall 513 | wall 4621
+2023-01-11 00:33:50 | INFO | fairseq.trainer | begin training epoch 10
+2023-01-11 00:34:28 | INFO | train_inner | epoch 010:     48 / 628 loss=5.707, nll_loss=4.266, total=3167.75, n_correct=1537.23, ppl=19.24, accuracy=48.528, wps=3607.2, ups=1.14, wpb=3167.8, bsz=140.3, num_updates=5700, lr=0.000936586, gnorm=0.728, train_wall=80, wall=4660
+2023-01-11 00:35:49 | INFO | train_inner | epoch 010:    148 / 628 loss=5.595, nll_loss=4.135, total=3143.46, n_correct=1542.84, ppl=17.57, accuracy=49.081, wps=3906.6, ups=1.24, wpb=3143.5, bsz=135.7, num_updates=5800, lr=0.000928477, gnorm=0.735, train_wall=80, wall=4740
+2023-01-11 00:37:12 | INFO | train_inner | epoch 010:    248 / 628 loss=5.622, nll_loss=4.163, total=3162.86, n_correct=1552.48, ppl=17.91, accuracy=49.085, wps=3794.2, ups=1.2, wpb=3162.9, bsz=134.9, num_updates=5900, lr=0.000920575, gnorm=0.736, train_wall=83, wall=4824
+2023-01-11 00:38:33 | INFO | train_inner | epoch 010:    348 / 628 loss=5.62, nll_loss=4.16, total=3153.46, n_correct=1551.18, ppl=17.88, accuracy=49.19, wps=3913.2, ups=1.24, wpb=3153.5, bsz=136.6, num_updates=6000, lr=0.000912871, gnorm=0.744, train_wall=80, wall=4904
+2023-01-11 00:39:55 | INFO | train_inner | epoch 010:    448 / 628 loss=5.69, nll_loss=4.239, total=3159.58, n_correct=1534.04, ppl=18.89, accuracy=48.552, wps=3864.5, ups=1.22, wpb=3159.6, bsz=135.7, num_updates=6100, lr=0.000905357, gnorm=0.746, train_wall=81, wall=4986
+2023-01-11 00:41:18 | INFO | train_inner | epoch 010:    548 / 628 loss=5.701, nll_loss=4.252, total=3179.23, n_correct=1547.71, ppl=19.06, accuracy=48.682, wps=3836, ups=1.21, wpb=3179.2, bsz=136.5, num_updates=6200, lr=0.000898027, gnorm=0.732, train_wall=83, wall=5069
+2023-01-11 00:42:22 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 00:42:27 | INFO | valid | epoch 010 | valid on 'valid' subset | loss 6.176 | nll_loss 4.738 | total 668 | n_correct 312.962 | ppl 26.68 | accuracy 46.851 | wps 10957.8 | wpb 668 | bsz 28.6 | num_updates 6280 | best_loss 6.176
+2023-01-11 00:42:27 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 00:42:28 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint10.pt (epoch 10 @ 6280 updates, score 6.176) (writing took 1.1115967000005185 seconds)
+2023-01-11 00:42:28 | INFO | fairseq_cli.train | end of epoch 10 (average epoch stats below)
+2023-01-11 00:42:28 | INFO | train | epoch 010 | loss 5.64 | nll_loss 4.184 | total 3160 | n_correct 1547.99 | ppl 18.18 | accuracy 48.987 | wps 3825.7 | ups 1.21 | wpb 3160 | bsz 136.5 | num_updates 6280 | lr 0.000892288 | gnorm 0.735 | train_wall 510 | wall 5140
+2023-01-11 00:42:28 | INFO | fairseq.trainer | begin training epoch 11
+2023-01-11 00:42:45 | INFO | train_inner | epoch 011:     20 / 628 loss=5.625, nll_loss=4.168, total=3138.39, n_correct=1546.07, ppl=17.98, accuracy=49.263, wps=3588.2, ups=1.14, wpb=3138.4, bsz=136.4, num_updates=6300, lr=0.000890871, gnorm=0.73, train_wall=81, wall=5157
+2023-01-11 00:44:08 | INFO | train_inner | epoch 011:    120 / 628 loss=5.341, nll_loss=3.843, total=3172.71, n_correct=1632.24, ppl=14.35, accuracy=51.446, wps=3833.9, ups=1.21, wpb=3172.7, bsz=131, num_updates=6400, lr=0.000883883, gnorm=0.714, train_wall=82, wall=5239
+2023-01-11 00:45:30 | INFO | train_inner | epoch 011:    220 / 628 loss=5.379, nll_loss=3.883, total=3171.93, n_correct=1625.93, ppl=14.75, accuracy=51.26, wps=3854.2, ups=1.22, wpb=3171.9, bsz=141.7, num_updates=6500, lr=0.000877058, gnorm=0.725, train_wall=82, wall=5322
+2023-01-11 00:46:56 | INFO | train_inner | epoch 011:    320 / 628 loss=5.414, nll_loss=3.921, total=3162.01, n_correct=1615.14, ppl=15.14, accuracy=51.08, wps=3697.8, ups=1.17, wpb=3162, bsz=141.2, num_updates=6600, lr=0.000870388, gnorm=0.728, train_wall=85, wall=5407
+2023-01-11 00:48:24 | INFO | train_inner | epoch 011:    420 / 628 loss=5.474, nll_loss=3.989, total=3158.56, n_correct=1593.84, ppl=15.88, accuracy=50.461, wps=3588.7, ups=1.14, wpb=3158.6, bsz=134.5, num_updates=6700, lr=0.000863868, gnorm=0.741, train_wall=88, wall=5495
+2023-01-11 00:49:52 | INFO | train_inner | epoch 011:    520 / 628 loss=5.493, nll_loss=4.012, total=3130.26, n_correct=1579.07, ppl=16.13, accuracy=50.445, wps=3537.6, ups=1.13, wpb=3130.3, bsz=133.7, num_updates=6800, lr=0.000857493, gnorm=0.734, train_wall=88, wall=5584
+2023-01-11 00:51:20 | INFO | train_inner | epoch 011:    620 / 628 loss=5.531, nll_loss=4.057, total=3171.77, n_correct=1589.19, ppl=16.64, accuracy=50.104, wps=3615.8, ups=1.14, wpb=3171.8, bsz=136.2, num_updates=6900, lr=0.000851257, gnorm=0.72, train_wall=87, wall=5671
+2023-01-11 00:51:26 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 00:51:32 | INFO | valid | epoch 011 | valid on 'valid' subset | loss 6.126 | nll_loss 4.652 | total 668 | n_correct 317.241 | ppl 25.14 | accuracy 47.491 | wps 10204.3 | wpb 668 | bsz 28.6 | num_updates 6908 | best_loss 6.126
+2023-01-11 00:51:32 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 00:51:33 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint11.pt (epoch 11 @ 6908 updates, score 6.126) (writing took 1.1820626000044285 seconds)
+2023-01-11 00:51:33 | INFO | fairseq_cli.train | end of epoch 11 (average epoch stats below)
+2023-01-11 00:51:33 | INFO | train | epoch 011 | loss 5.434 | nll_loss 3.945 | total 3160 | n_correct 1606.63 | ppl 15.41 | accuracy 50.843 | wps 3643.8 | ups 1.15 | wpb 3160 | bsz 136.5 | num_updates 6908 | lr 0.000850763 | gnorm 0.727 | train_wall 536 | wall 5684
+2023-01-11 00:51:33 | INFO | fairseq.trainer | begin training epoch 12
+2023-01-11 00:52:54 | INFO | train_inner | epoch 012:     92 / 628 loss=5.11, nll_loss=3.577, total=3149.45, n_correct=1697.11, ppl=11.94, accuracy=53.886, wps=3345.1, ups=1.06, wpb=3149.4, bsz=140.6, num_updates=7000, lr=0.000845154, gnorm=0.708, train_wall=87, wall=5766
+2023-01-11 00:54:23 | INFO | train_inner | epoch 012:    192 / 628 loss=5.203, nll_loss=3.678, total=3204.64, n_correct=1695.94, ppl=12.8, accuracy=52.921, wps=3613.3, ups=1.13, wpb=3204.6, bsz=137, num_updates=7100, lr=0.000839181, gnorm=0.709, train_wall=88, wall=5854
+2023-01-11 00:55:50 | INFO | train_inner | epoch 012:    292 / 628 loss=5.282, nll_loss=3.767, total=3112.45, n_correct=1620.95, ppl=13.62, accuracy=52.08, wps=3547.1, ups=1.14, wpb=3112.4, bsz=130.3, num_updates=7200, lr=0.000833333, gnorm=0.735, train_wall=87, wall=5942
+2023-01-11 00:57:18 | INFO | train_inner | epoch 012:    392 / 628 loss=5.273, nll_loss=3.756, total=3147.3, n_correct=1645.65, ppl=13.51, accuracy=52.288, wps=3610.5, ups=1.15, wpb=3147.3, bsz=136.9, num_updates=7300, lr=0.000827606, gnorm=0.733, train_wall=87, wall=6029
+2023-01-11 00:58:44 | INFO | train_inner | epoch 012:    492 / 628 loss=5.343, nll_loss=3.837, total=3176.7, n_correct=1644.14, ppl=14.29, accuracy=51.756, wps=3678.5, ups=1.16, wpb=3176.7, bsz=137.7, num_updates=7400, lr=0.000821995, gnorm=0.725, train_wall=86, wall=6115
+2023-01-11 01:00:13 | INFO | train_inner | epoch 012:    592 / 628 loss=5.359, nll_loss=3.857, total=3165.94, n_correct=1638.43, ppl=14.49, accuracy=51.752, wps=3542.1, ups=1.12, wpb=3165.9, bsz=138.2, num_updates=7500, lr=0.000816497, gnorm=0.732, train_wall=89, wall=6205
+2023-01-11 01:00:45 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 01:00:51 | INFO | valid | epoch 012 | valid on 'valid' subset | loss 6.112 | nll_loss 4.657 | total 668 | n_correct 318.241 | ppl 25.22 | accuracy 47.641 | wps 9663.8 | wpb 668 | bsz 28.6 | num_updates 7536 | best_loss 6.112
+2023-01-11 01:00:51 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 01:00:52 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint12.pt (epoch 12 @ 7536 updates, score 6.112) (writing took 1.2294436000011046 seconds)
+2023-01-11 01:00:52 | INFO | fairseq_cli.train | end of epoch 12 (average epoch stats below)
+2023-01-11 01:00:52 | INFO | train | epoch 012 | loss 5.267 | nll_loss 3.752 | total 3160 | n_correct 1655.54 | ppl 13.47 | accuracy 52.391 | wps 3549.3 | ups 1.12 | wpb 3160 | bsz 136.5 | num_updates 7536 | lr 0.000814544 | gnorm 0.725 | train_wall 550 | wall 6244
+2023-01-11 01:00:52 | INFO | fairseq.trainer | begin training epoch 13
+2023-01-11 01:01:47 | INFO | train_inner | epoch 013:     64 / 628 loss=5.126, nll_loss=3.591, total=3188.95, n_correct=1711.7, ppl=12.05, accuracy=53.676, wps=3394.4, ups=1.06, wpb=3188.9, bsz=138.6, num_updates=7600, lr=0.000811107, gnorm=0.727, train_wall=86, wall=6299
+2023-01-11 01:03:09 | INFO | train_inner | epoch 013:    164 / 628 loss=5.003, nll_loss=3.449, total=3161.03, n_correct=1734.29, ppl=10.92, accuracy=54.865, wps=3876.9, ups=1.23, wpb=3161, bsz=141, num_updates=7700, lr=0.000805823, gnorm=0.716, train_wall=81, wall=6380
+2023-01-11 01:04:33 | INFO | train_inner | epoch 013:    264 / 628 loss=5.146, nll_loss=3.609, total=3117.21, n_correct=1662.16, ppl=12.2, accuracy=53.322, wps=3723.3, ups=1.19, wpb=3117.2, bsz=128.2, num_updates=7800, lr=0.000800641, gnorm=0.737, train_wall=83, wall=6464
+2023-01-11 01:05:55 | INFO | train_inner | epoch 013:    364 / 628 loss=5.133, nll_loss=3.594, total=3140.11, n_correct=1690.9, ppl=12.08, accuracy=53.848, wps=3792.8, ups=1.21, wpb=3140.1, bsz=135.4, num_updates=7900, lr=0.000795557, gnorm=0.736, train_wall=82, wall=6547
+2023-01-11 01:07:20 | INFO | train_inner | epoch 013:    464 / 628 loss=5.159, nll_loss=3.624, total=3187.56, n_correct=1710.9, ppl=12.33, accuracy=53.674, wps=3761.3, ups=1.18, wpb=3187.6, bsz=142.7, num_updates=8000, lr=0.000790569, gnorm=0.726, train_wall=84, wall=6632
+2023-01-11 01:08:41 | INFO | train_inner | epoch 013:    564 / 628 loss=5.205, nll_loss=3.677, total=3174.91, n_correct=1688.36, ppl=12.79, accuracy=53.178, wps=3901.3, ups=1.23, wpb=3174.9, bsz=135.4, num_updates=8100, lr=0.000785674, gnorm=0.729, train_wall=81, wall=6713
+2023-01-11 01:09:32 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 01:09:37 | INFO | valid | epoch 013 | valid on 'valid' subset | loss 6.088 | nll_loss 4.615 | total 668 | n_correct 322.025 | ppl 24.51 | accuracy 48.207 | wps 11090.1 | wpb 668 | bsz 28.6 | num_updates 8164 | best_loss 6.088
+2023-01-11 01:09:37 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 01:09:38 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint13.pt (epoch 13 @ 8164 updates, score 6.088) (writing took 1.1739843000032124 seconds)
+2023-01-11 01:09:38 | INFO | fairseq_cli.train | end of epoch 13 (average epoch stats below)
+2023-01-11 01:09:38 | INFO | train | epoch 013 | loss 5.124 | nll_loss 3.585 | total 3160 | n_correct 1700.5 | ppl 12 | accuracy 53.813 | wps 3773.9 | ups 1.19 | wpb 3160 | bsz 136.5 | num_updates 8164 | lr 0.000782589 | gnorm 0.728 | train_wall 517 | wall 6769
+2023-01-11 01:09:38 | INFO | fairseq.trainer | begin training epoch 14
+2023-01-11 01:10:06 | INFO | train_inner | epoch 014:     36 / 628 loss=5.09, nll_loss=3.548, total=3121.18, n_correct=1689.27, ppl=11.7, accuracy=54.123, wps=3689.1, ups=1.18, wpb=3121.2, bsz=132, num_updates=8200, lr=0.000780869, gnorm=0.737, train_wall=78, wall=6798
+2023-01-11 01:11:29 | INFO | train_inner | epoch 014:    136 / 628 loss=4.871, nll_loss=3.295, total=3177.04, n_correct=1789.57, ppl=9.82, accuracy=56.328, wps=3853.8, ups=1.21, wpb=3177, bsz=139.8, num_updates=8300, lr=0.000776151, gnorm=0.708, train_wall=82, wall=6880
+2023-01-11 01:12:51 | INFO | train_inner | epoch 014:    236 / 628 loss=4.941, nll_loss=3.373, total=3151.06, n_correct=1750.92, ppl=10.36, accuracy=55.566, wps=3823.8, ups=1.21, wpb=3151.1, bsz=136.7, num_updates=8400, lr=0.000771517, gnorm=0.724, train_wall=82, wall=6962
+2023-01-11 01:14:14 | INFO | train_inner | epoch 014:    336 / 628 loss=4.975, nll_loss=3.411, total=3210.03, n_correct=1775.82, ppl=10.64, accuracy=55.321, wps=3880.6, ups=1.21, wpb=3210, bsz=141, num_updates=8500, lr=0.000766965, gnorm=0.72, train_wall=82, wall=7045
+2023-01-11 01:15:37 | INFO | train_inner | epoch 014:    436 / 628 loss=5.033, nll_loss=3.477, total=3174.45, n_correct=1737.1, ppl=11.14, accuracy=54.721, wps=3793.3, ups=1.19, wpb=3174.4, bsz=137.5, num_updates=8600, lr=0.000762493, gnorm=0.737, train_wall=83, wall=7129
+2023-01-11 01:17:01 | INFO | train_inner | epoch 014:    536 / 628 loss=5.117, nll_loss=3.573, total=3123.29, n_correct=1682.4, ppl=11.9, accuracy=53.866, wps=3727.4, ups=1.19, wpb=3123.3, bsz=132.6, num_updates=8700, lr=0.000758098, gnorm=0.756, train_wall=83, wall=7213
+2023-01-11 01:18:15 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 01:18:21 | INFO | valid | epoch 014 | valid on 'valid' subset | loss 6.076 | nll_loss 4.6 | total 668 | n_correct 323.658 | ppl 24.25 | accuracy 48.452 | wps 9752.9 | wpb 668 | bsz 28.6 | num_updates 8792 | best_loss 6.076
+2023-01-11 01:18:21 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 01:18:22 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint14.pt (epoch 14 @ 8792 updates, score 6.076) (writing took 1.126025399993523 seconds)
+2023-01-11 01:18:22 | INFO | fairseq_cli.train | end of epoch 14 (average epoch stats below)
+2023-01-11 01:18:22 | INFO | train | epoch 014 | loss 5.002 | nll_loss 3.443 | total 3160 | n_correct 1738.79 | ppl 10.88 | accuracy 55.025 | wps 3784.7 | ups 1.2 | wpb 3160 | bsz 136.5 | num_updates 8792 | lr 0.000754121 | gnorm 0.732 | train_wall 515 | wall 7294
+2023-01-11 01:18:22 | INFO | fairseq.trainer | begin training epoch 15
+2023-01-11 01:18:29 | INFO | train_inner | epoch 015:      8 / 628 loss=5.11, nll_loss=3.566, total=3128.35, n_correct=1692.89, ppl=11.84, accuracy=54.114, wps=3566.6, ups=1.14, wpb=3128.3, bsz=132.6, num_updates=8800, lr=0.000753778, gnorm=0.749, train_wall=80, wall=7300
+2023-01-11 01:19:52 | INFO | train_inner | epoch 015:    108 / 628 loss=4.757, nll_loss=3.163, total=3157.78, n_correct=1813.69, ppl=8.96, accuracy=57.436, wps=3788.5, ups=1.2, wpb=3157.8, bsz=135, num_updates=8900, lr=0.000749532, gnorm=0.721, train_wall=83, wall=7384
+2023-01-11 01:21:14 | INFO | train_inner | epoch 015:    208 / 628 loss=4.82, nll_loss=3.232, total=3139.71, n_correct=1784.05, ppl=9.4, accuracy=56.822, wps=3859, ups=1.23, wpb=3139.7, bsz=137, num_updates=9000, lr=0.000745356, gnorm=0.732, train_wall=81, wall=7465
+2023-01-11 01:22:33 | INFO | train_inner | epoch 015:    308 / 628 loss=4.882, nll_loss=3.302, total=3145.8, n_correct=1771.57, ppl=9.86, accuracy=56.315, wps=3968, ups=1.26, wpb=3145.8, bsz=137.2, num_updates=9100, lr=0.000741249, gnorm=0.735, train_wall=79, wall=7544
+2023-01-11 01:23:54 | INFO | train_inner | epoch 015:    408 / 628 loss=4.916, nll_loss=3.339, total=3210.55, n_correct=1798.78, ppl=10.12, accuracy=56.027, wps=3947.6, ups=1.23, wpb=3210.6, bsz=139.9, num_updates=9200, lr=0.00073721, gnorm=0.74, train_wall=81, wall=7626
+2023-01-11 01:25:18 | INFO | train_inner | epoch 015:    508 / 628 loss=4.995, nll_loss=3.43, total=3155.15, n_correct=1741.62, ppl=10.78, accuracy=55.199, wps=3772.3, ups=1.2, wpb=3155.2, bsz=131, num_updates=9300, lr=0.000733236, gnorm=0.75, train_wall=83, wall=7709
+2023-01-11 01:26:41 | INFO | train_inner | epoch 015:    608 / 628 loss=5.005, nll_loss=3.443, total=3179.2, n_correct=1750.43, ppl=10.88, accuracy=55.059, wps=3819.3, ups=1.2, wpb=3179.2, bsz=137.9, num_updates=9400, lr=0.000729325, gnorm=0.741, train_wall=83, wall=7793
+2023-01-11 01:26:57 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 01:27:02 | INFO | valid | epoch 015 | valid on 'valid' subset | loss 6.079 | nll_loss 4.589 | total 668 | n_correct 324.949 | ppl 24.06 | accuracy 48.645 | wps 10668.3 | wpb 668 | bsz 28.6 | num_updates 9420 | best_loss 6.076
+2023-01-11 01:27:02 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 01:27:03 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint15.pt (epoch 15 @ 9420 updates, score 6.079) (writing took 0.7971459999971557 seconds)
+2023-01-11 01:27:03 | INFO | fairseq_cli.train | end of epoch 15 (average epoch stats below)
+2023-01-11 01:27:03 | INFO | train | epoch 015 | loss 4.896 | nll_loss 3.319 | total 3160 | n_correct 1774.2 | ppl 9.98 | accuracy 56.145 | wps 3810.9 | ups 1.21 | wpb 3160 | bsz 136.5 | num_updates 9420 | lr 0.00072855 | gnorm 0.738 | train_wall 512 | wall 7814
+2023-01-11 01:27:03 | INFO | fairseq.trainer | begin training epoch 16
+2023-01-11 01:28:08 | INFO | train_inner | epoch 016:     80 / 628 loss=4.706, nll_loss=3.103, total=3156.51, n_correct=1839.9, ppl=8.59, accuracy=58.289, wps=3613.2, ups=1.14, wpb=3156.5, bsz=141.8, num_updates=9500, lr=0.000725476, gnorm=0.722, train_wall=81, wall=7880
+2023-01-11 01:29:31 | INFO | train_inner | epoch 016:    180 / 628 loss=4.709, nll_loss=3.103, total=3117.06, n_correct=1814.5, ppl=8.59, accuracy=58.212, wps=3765.1, ups=1.21, wpb=3117.1, bsz=130.6, num_updates=9600, lr=0.000721688, gnorm=0.736, train_wall=82, wall=7963
+2023-01-11 01:30:50 | INFO | train_inner | epoch 016:    280 / 628 loss=4.819, nll_loss=3.226, total=3129.35, n_correct=1780.42, ppl=9.36, accuracy=56.894, wps=3966.6, ups=1.27, wpb=3129.3, bsz=130.7, num_updates=9700, lr=0.000717958, gnorm=0.75, train_wall=79, wall=8042
+2023-01-11 01:32:11 | INFO | train_inner | epoch 016:    380 / 628 loss=4.809, nll_loss=3.217, total=3164.97, n_correct=1809.59, ppl=9.3, accuracy=57.176, wps=3929.3, ups=1.24, wpb=3165, bsz=141.5, num_updates=9800, lr=0.000714286, gnorm=0.748, train_wall=80, wall=8122
+2023-01-11 01:33:32 | INFO | train_inner | epoch 016:    480 / 628 loss=4.86, nll_loss=3.274, total=3146.36, n_correct=1782.14, ppl=9.67, accuracy=56.641, wps=3873.7, ups=1.23, wpb=3146.4, bsz=136.3, num_updates=9900, lr=0.000710669, gnorm=0.754, train_wall=81, wall=8203
+2023-01-11 01:34:53 | INFO | train_inner | epoch 016:    580 / 628 loss=4.88, nll_loss=3.298, total=3244.89, n_correct=1830.81, ppl=9.84, accuracy=56.421, wps=3990.9, ups=1.23, wpb=3244.9, bsz=140.8, num_updates=10000, lr=0.000707107, gnorm=0.739, train_wall=81, wall=8285
+2023-01-11 01:35:31 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 01:35:36 | INFO | valid | epoch 016 | valid on 'valid' subset | loss 6.101 | nll_loss 4.602 | total 668 | n_correct 324.354 | ppl 24.28 | accuracy 48.556 | wps 10902.8 | wpb 668 | bsz 28.6 | num_updates 10048 | best_loss 6.076
+2023-01-11 01:35:36 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 01:35:37 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint16.pt (epoch 16 @ 10048 updates, score 6.101) (writing took 0.7195714999979828 seconds)
+2023-01-11 01:35:37 | INFO | fairseq_cli.train | end of epoch 16 (average epoch stats below)
+2023-01-11 01:35:37 | INFO | train | epoch 016 | loss 4.803 | nll_loss 3.21 | total 3160 | n_correct 1808 | ppl 9.25 | accuracy 57.215 | wps 3862.2 | ups 1.22 | wpb 3160 | bsz 136.5 | num_updates 10048 | lr 0.000705416 | gnorm 0.742 | train_wall 506 | wall 8328
+2023-01-11 01:35:37 | INFO | fairseq.trainer | begin training epoch 17
+2023-01-11 01:36:20 | INFO | train_inner | epoch 017:     52 / 628 loss=4.735, nll_loss=3.134, total=3125.38, n_correct=1813.1, ppl=8.78, accuracy=58.012, wps=3613.6, ups=1.16, wpb=3125.4, bsz=132.9, num_updates=10100, lr=0.000703598, gnorm=0.753, train_wall=80, wall=8371
+2023-01-11 01:37:42 | INFO | train_inner | epoch 017:    152 / 628 loss=4.579, nll_loss=2.953, total=3181.24, n_correct=1898.53, ppl=7.74, accuracy=59.679, wps=3881, ups=1.22, wpb=3181.2, bsz=140.8, num_updates=10200, lr=0.00070014, gnorm=0.728, train_wall=82, wall=8453
+2023-01-11 01:39:04 | INFO | train_inner | epoch 017:    252 / 628 loss=4.694, nll_loss=3.082, total=3144.53, n_correct=1834.43, ppl=8.47, accuracy=58.337, wps=3818.5, ups=1.21, wpb=3144.5, bsz=134.5, num_updates=10300, lr=0.000696733, gnorm=0.75, train_wall=82, wall=8536
+2023-01-11 01:40:25 | INFO | train_inner | epoch 017:    352 / 628 loss=4.711, nll_loss=3.102, total=3183.59, n_correct=1850.99, ppl=8.58, accuracy=58.142, wps=3921.7, ups=1.23, wpb=3183.6, bsz=140.2, num_updates=10400, lr=0.000693375, gnorm=0.747, train_wall=81, wall=8617
+2023-01-11 01:41:51 | INFO | train_inner | epoch 017:    452 / 628 loss=4.756, nll_loss=3.153, total=3167.78, n_correct=1827.89, ppl=8.9, accuracy=57.703, wps=3706.6, ups=1.17, wpb=3167.8, bsz=137.8, num_updates=10500, lr=0.000690066, gnorm=0.757, train_wall=85, wall=8702
+2023-01-11 01:43:13 | INFO | train_inner | epoch 017:    552 / 628 loss=4.823, nll_loss=3.23, total=3146.62, n_correct=1795.32, ppl=9.38, accuracy=57.056, wps=3809.3, ups=1.21, wpb=3146.6, bsz=133, num_updates=10600, lr=0.000686803, gnorm=0.76, train_wall=82, wall=8785
+2023-01-11 01:44:14 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 01:44:19 | INFO | valid | epoch 017 | valid on 'valid' subset | loss 6.12 | nll_loss 4.616 | total 668 | n_correct 324.582 | ppl 24.52 | accuracy 48.59 | wps 9431.8 | wpb 668 | bsz 28.6 | num_updates 10676 | best_loss 6.076
+2023-01-11 01:44:19 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 01:44:20 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint17.pt (epoch 17 @ 10676 updates, score 6.12) (writing took 0.7549655000038911 seconds)
+2023-01-11 01:44:20 | INFO | fairseq_cli.train | end of epoch 17 (average epoch stats below)
+2023-01-11 01:44:20 | INFO | train | epoch 017 | loss 4.717 | nll_loss 3.109 | total 3160 | n_correct 1837.4 | ppl 8.63 | accuracy 58.146 | wps 3791 | ups 1.2 | wpb 3160 | bsz 136.5 | num_updates 10676 | lr 0.000684354 | gnorm 0.75 | train_wall 515 | wall 8852
+2023-01-11 01:44:20 | INFO | fairseq.trainer | begin training epoch 18
+2023-01-11 01:44:40 | INFO | train_inner | epoch 018:     24 / 628 loss=4.776, nll_loss=3.177, total=3142.65, n_correct=1809.05, ppl=9.04, accuracy=57.564, wps=3619.6, ups=1.15, wpb=3142.7, bsz=132.9, num_updates=10700, lr=0.000683586, gnorm=0.759, train_wall=80, wall=8872
+2023-01-11 01:46:02 | INFO | train_inner | epoch 018:    124 / 628 loss=4.47, nll_loss=2.826, total=3138.27, n_correct=1910.3, ppl=7.09, accuracy=60.871, wps=3845.5, ups=1.23, wpb=3138.3, bsz=137, num_updates=10800, lr=0.000680414, gnorm=0.73, train_wall=81, wall=8953
+2023-01-11 01:47:24 | INFO | train_inner | epoch 018:    224 / 628 loss=4.588, nll_loss=2.958, total=3152.28, n_correct=1878.72, ppl=7.77, accuracy=59.599, wps=3837.8, ups=1.22, wpb=3152.3, bsz=136.2, num_updates=10900, lr=0.000677285, gnorm=0.753, train_wall=82, wall=9035
+2023-01-11 01:48:46 | INFO | train_inner | epoch 018:    324 / 628 loss=4.642, nll_loss=3.02, total=3183.07, n_correct=1877.41, ppl=8.11, accuracy=58.981, wps=3882.6, ups=1.22, wpb=3183.1, bsz=138.1, num_updates=11000, lr=0.0006742, gnorm=0.754, train_wall=82, wall=9117
+2023-01-11 01:50:08 | INFO | train_inner | epoch 018:    424 / 628 loss=4.68, nll_loss=3.063, total=3178.11, n_correct=1859.78, ppl=8.35, accuracy=58.518, wps=3874.3, ups=1.22, wpb=3178.1, bsz=134.7, num_updates=11100, lr=0.000671156, gnorm=0.769, train_wall=82, wall=9199
+2023-01-11 01:51:31 | INFO | train_inner | epoch 018:    524 / 628 loss=4.752, nll_loss=3.146, total=3151.37, n_correct=1820.16, ppl=8.85, accuracy=57.758, wps=3786.8, ups=1.2, wpb=3151.4, bsz=135.1, num_updates=11200, lr=0.000668153, gnorm=0.768, train_wall=83, wall=9283
+2023-01-11 01:52:53 | INFO | train_inner | epoch 018:    624 / 628 loss=4.738, nll_loss=3.131, total=3185.5, n_correct=1849.7, ppl=8.76, accuracy=58.066, wps=3873.9, ups=1.22, wpb=3185.5, bsz=140.2, num_updates=11300, lr=0.00066519, gnorm=0.76, train_wall=82, wall=9365
+2023-01-11 01:52:56 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 01:53:01 | INFO | valid | epoch 018 | valid on 'valid' subset | loss 6.107 | nll_loss 4.613 | total 668 | n_correct 325.456 | ppl 24.47 | accuracy 48.721 | wps 11006.2 | wpb 668 | bsz 28.6 | num_updates 11304 | best_loss 6.076
+2023-01-11 01:53:01 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 01:53:02 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint18.pt (epoch 18 @ 11304 updates, score 6.107) (writing took 0.7819071000049007 seconds)
+2023-01-11 01:53:02 | INFO | fairseq_cli.train | end of epoch 18 (average epoch stats below)
+2023-01-11 01:53:02 | INFO | train | epoch 018 | loss 4.64 | nll_loss 3.018 | total 3160 | n_correct 1865.04 | ppl 8.1 | accuracy 59.02 | wps 3802.5 | ups 1.2 | wpb 3160 | bsz 136.5 | num_updates 11304 | lr 0.000665072 | gnorm 0.756 | train_wall 514 | wall 9374
+2023-01-11 01:53:02 | INFO | fairseq.trainer | begin training epoch 19
+2023-01-11 01:54:21 | INFO | train_inner | epoch 019:     96 / 628 loss=4.419, nll_loss=2.766, total=3145.5, n_correct=1939.63, ppl=6.8, accuracy=61.664, wps=3598.1, ups=1.14, wpb=3145.5, bsz=138.6, num_updates=11400, lr=0.000662266, gnorm=0.742, train_wall=81, wall=9452
+2023-01-11 01:55:44 | INFO | train_inner | epoch 019:    196 / 628 loss=4.494, nll_loss=2.85, total=3115.91, n_correct=1890.9, ppl=7.21, accuracy=60.685, wps=3765, ups=1.21, wpb=3115.9, bsz=134.8, num_updates=11500, lr=0.00065938, gnorm=0.763, train_wall=82, wall=9535
+2023-01-11 01:57:06 | INFO | train_inner | epoch 019:    296 / 628 loss=4.549, nll_loss=2.91, total=3189.62, n_correct=1912.19, ppl=7.52, accuracy=59.95, wps=3880.9, ups=1.22, wpb=3189.6, bsz=136.7, num_updates=11600, lr=0.000656532, gnorm=0.761, train_wall=82, wall=9617
+2023-01-11 01:58:28 | INFO | train_inner | epoch 019:    396 / 628 loss=4.601, nll_loss=2.971, total=3172.06, n_correct=1884.68, ppl=7.84, accuracy=59.415, wps=3835.6, ups=1.21, wpb=3172.1, bsz=138.7, num_updates=11700, lr=0.00065372, gnorm=0.767, train_wall=82, wall=9700
+2023-01-11 01:59:50 | INFO | train_inner | epoch 019:    496 / 628 loss=4.672, nll_loss=3.052, total=3148.99, n_correct=1851.43, ppl=8.29, accuracy=58.794, wps=3839.5, ups=1.22, wpb=3149, bsz=132.5, num_updates=11800, lr=0.000650945, gnorm=0.777, train_wall=82, wall=9782
+2023-01-11 02:01:10 | INFO | train_inner | epoch 019:    596 / 628 loss=4.652, nll_loss=3.031, total=3196.05, n_correct=1888.6, ppl=8.17, accuracy=59.092, wps=4006.2, ups=1.25, wpb=3196.1, bsz=138.9, num_updates=11900, lr=0.000648204, gnorm=0.77, train_wall=79, wall=9862
+2023-01-11 02:01:37 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 02:01:42 | INFO | valid | epoch 019 | valid on 'valid' subset | loss 6.144 | nll_loss 4.641 | total 668 | n_correct 325.785 | ppl 24.95 | accuracy 48.77 | wps 10140 | wpb 668 | bsz 28.6 | num_updates 11932 | best_loss 6.076
+2023-01-11 02:01:42 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 02:01:43 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint19.pt (epoch 19 @ 11932 updates, score 6.144) (writing took 0.7531537999966531 seconds)
+2023-01-11 02:01:43 | INFO | fairseq_cli.train | end of epoch 19 (average epoch stats below)
+2023-01-11 02:01:43 | INFO | train | epoch 019 | loss 4.572 | nll_loss 2.939 | total 3160 | n_correct 1891 | ppl 7.67 | accuracy 59.842 | wps 3812.2 | ups 1.21 | wpb 3160 | bsz 136.5 | num_updates 11932 | lr 0.000647334 | gnorm 0.764 | train_wall 512 | wall 9894
+2023-01-11 02:01:43 | INFO | fairseq.trainer | begin training epoch 20
+2023-01-11 02:02:39 | INFO | train_inner | epoch 020:     68 / 628 loss=4.458, nll_loss=2.809, total=3097.02, n_correct=1894.08, ppl=7.01, accuracy=61.158, wps=3503.7, ups=1.13, wpb=3097, bsz=134.3, num_updates=12000, lr=0.000645497, gnorm=0.76, train_wall=82, wall=9950
+2023-01-11 02:04:02 | INFO | train_inner | epoch 020:    168 / 628 loss=4.394, nll_loss=2.733, total=3197.69, n_correct=1980.37, ppl=6.65, accuracy=61.931, wps=3837.7, ups=1.2, wpb=3197.7, bsz=135.3, num_updates=12100, lr=0.000642824, gnorm=0.752, train_wall=83, wall=10034
+2023-01-11 02:05:27 | INFO | train_inner | epoch 020:    268 / 628 loss=4.459, nll_loss=2.805, total=3135.96, n_correct=1915.76, ppl=6.99, accuracy=61.09, wps=3675.8, ups=1.17, wpb=3136, bsz=133.3, num_updates=12200, lr=0.000640184, gnorm=0.766, train_wall=85, wall=10119
+2023-01-11 02:06:48 | INFO | train_inner | epoch 020:    368 / 628 loss=4.539, nll_loss=2.898, total=3165.65, n_correct=1906.79, ppl=7.45, accuracy=60.234, wps=3909.1, ups=1.23, wpb=3165.7, bsz=137.1, num_updates=12300, lr=0.000637577, gnorm=0.776, train_wall=81, wall=10200
+2023-01-11 02:08:10 | INFO | train_inner | epoch 020:    468 / 628 loss=4.584, nll_loss=2.949, total=3164.66, n_correct=1889.68, ppl=7.72, accuracy=59.712, wps=3877.3, ups=1.23, wpb=3164.7, bsz=135, num_updates=12400, lr=0.000635001, gnorm=0.776, train_wall=81, wall=10281
+2023-01-11 02:09:32 | INFO | train_inner | epoch 020:    568 / 628 loss=4.576, nll_loss=2.942, total=3217.61, n_correct=1927.39, ppl=7.68, accuracy=59.901, wps=3933, ups=1.22, wpb=3217.6, bsz=144.1, num_updates=12500, lr=0.000632456, gnorm=0.768, train_wall=81, wall=10363
+2023-01-11 02:10:21 | INFO | fairseq_cli.train | begin validation on "valid" subset
+2023-01-11 02:10:27 | INFO | valid | epoch 020 | valid on 'valid' subset | loss 6.159 | nll_loss 4.666 | total 668 | n_correct 325.658 | ppl 25.39 | accuracy 48.751 | wps 9677.5 | wpb 668 | bsz 28.6 | num_updates 12560 | best_loss 6.076
+2023-01-11 02:10:27 | INFO | fairseq_cli.train | begin save checkpoint
+2023-01-11 02:10:27 | INFO | fairseq.checkpoint_utils | saved checkpoint /home/koukaiqi0907/NLP-Course-Homework-2022/nmt/en-zh/News-Commentary-small/model/baseline_News-Commentary-small_layer4_256_4_1024_prenorm/checkpoints/checkpoint20.pt (epoch 20 @ 12560 updates, score 6.159) (writing took 0.73236960000213 seconds)
+2023-01-11 02:10:27 | INFO | fairseq_cli.train | end of epoch 20 (average epoch stats below)
+2023-01-11 02:10:27 | INFO | train | epoch 020 | loss 4.507 | nll_loss 2.862 | total 3160 | n_correct 1915.49 | ppl 7.27 | accuracy 60.617 | wps 3781.7 | ups 1.2 | wpb 3160 | bsz 136.5 | num_updates 12560 | lr 0.000630943 | gnorm 0.769 | train_wall 516 | wall 10419
+2023-01-11 02:10:27 | INFO | fairseq_cli.train | done training in 10418.9 seconds
